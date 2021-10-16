@@ -64,6 +64,12 @@ vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### 订阅链接
 
-Premium线路：sub.php的网页链接，并附加参数 `level=premium`，例如`https://example.com/sdfawfadcva/sub.php?level=premium`
+Premium线路：sub.php的网页链接，并附加参数 `level=premium`，例如
+```
+https://example.com/sdfawfadcva/sub.php?level=premium
+```
 
-普通线路：sub.php的网页链接，例如`https://example.com/sdfawfadcva/sub.php`
+普通线路：sub.php的网页链接，例如
+```
+https://example.com/sdfawfadcva/sub.php
+```
