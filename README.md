@@ -2,12 +2,68 @@
 
 ## 功能
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
-- 自动提取分享链接中的节点别名
+- 自动提取分享链接中每一个节点的别名
 - 生成属于自己的订阅链接
 
-## 运行环境
+## 配置向导
 
+### 运行环境
 
-$url = ''; //在这里填写url
-$file = ''; //在这里填写存储普通线路订阅源文件的路径
-$file_premium = '';//在这里填写存储premium线路订阅源文件的路径
+- php 8.0
+- nginx 或 apache （为安全起见，建议设置好目录权限以防未经授权的访问）
+
+### 配置步骤
+
+在网站目录内新建一个目录，作为编辑器目录，并在 nginx 或 apache 中设置好访问目录的用户名、密码。
+
+打包下载本 repository，将 bootstrap 文件夹和 index 放入编辑器目录。
+
+在编辑器目录中新建两个空 txt 文件，用于存储普通线路订阅源文件和存储 premium 线路订阅源文件；并修改 index.php 中的路径和 url 设置：
+
+```
+$url = ''; //在这里填写 index.php 所在的网页 url，例如 https://example.com/editor/index.php
+$file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
+$file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
+```
+
+在网站目录内新建另一个目录作为订阅链接目录，名称尽量复杂。可以使用密码生成器生成一个复杂的目录名称。将sub.php拷贝进该目录，并修改 sub.php 中的路径设置
+
+```
+$file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
+$file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
+```
+
+## 使用
+
+### 添加和编辑节点
+
+访问index.php，在文本框中填写 `vmess://` 或 `ss://` 链接，每行填写一个。例如：
+
+```
+vmess://xxxxxxxxxxxxxxxxxxxxxxxxx
+ss://xxxxxxxxxxxxxxxxxxxxxxxx
+vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+如果不需要 premium 功能，可以任意填写两个文本框中的一个。点击提交，网页将自动提取各个节点的别名，并以html注释符包裹置于每条链接之前，例如：
+
+```
+<!--节点1名称--->
+vmess://xxxxxxxxxxxxxxxxxxxxxxxxx
+
+<!--节点2名称--->
+ss://xxxxxxxxxxxxxxxxxxxxxxxx
+
+<!--节点3名称--->
+vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+编辑或删除链接，点击提交即可。请不要编辑 ```<!--节点1名称--->``` 这个部分。如果要删除链接请整行删除。
+
+既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点premium下面的提交按钮，普通文本框内的更改将会丢失。
+
+### 订阅链接
+
+Premium线路：sub.php的网页链接，并附加参数 `level=premium`，例如`https://example.com/sdfawfadcva/sub.php?level=premium`
+
+普通线路：sub.php的网页链接，例如`https://example.com/sdfawfadcva/sub.php`
