@@ -2,13 +2,13 @@
 
 ## 功能
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
-- 整洁的bootstrap自适应页面
+- 整洁的 bootstrap 自适应页面
 - 自动提取分享链接中每一个节点的别名
 - 生成属于自己的 V2ray 订阅链接
 
 ## 截图
 
-![image](https://user-images.githubusercontent.com/10785943/137595944-a37f12ef-7a16-424e-9e84-56ca559857a0.png)
+![image](https://github.com/rickylsr/ShareYourV2raySubscription/blob/main/Screenshot.png)
 
 
 ## 配置向导
@@ -66,16 +66,16 @@ vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 编辑或删除链接，点击提交即可。不要编辑 ```<!--节点1名称--->``` 部分。删除或编辑链接时最好整行编辑，以避免未知错误。
 
-既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点premium下面的提交按钮，普通文本框内的更改将会丢失。
+既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点 premium 下面的提交按钮，普通文本框内的更改将会丢失。）
 
 ### 订阅链接
 
-Premium线路：sub.php的网页链接，并附加参数 `level=premium`，例如
+Premium线路：sub.php 的网页链接，并附加参数 `level=premium`，例如
 ```
 https://example.com/sdfawfadcva/sub.php?level=premium
 ```
 
-普通线路：sub.php的网页链接，例如
+普通线路：sub.php 的网页链接，例如
 ```
 https://example.com/sdfawfadcva/sub.php
 ```
