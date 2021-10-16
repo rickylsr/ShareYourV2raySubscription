@@ -2,8 +2,14 @@
 
 ## 功能
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
+- 整洁的bootstrap自适应页面
 - 自动提取分享链接中每一个节点的别名
-- 生成属于自己的订阅链接
+- 生成属于自己的 V2ray 订阅链接
+
+## 截图
+
+![image](https://user-images.githubusercontent.com/10785943/137595944-a37f12ef-7a16-424e-9e84-56ca559857a0.png)
+
 
 ## 配置向导
 
