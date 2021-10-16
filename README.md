@@ -1,5 +1,7 @@
 # ShareYourV2raySubscription
 
+自托管的V2ray订阅链接与节点管理器。
+
 ## 功能
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
 - 整洁的 bootstrap 自适应页面
