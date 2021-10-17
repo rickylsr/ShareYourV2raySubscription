@@ -12,7 +12,7 @@
         return preg_replace("~\nss://.*~", '', $content);
     };
     
-    $str = file_get_contents($file_premium, "r") or die("Unable to open file!");
+    $str = file_get_contents($file, "r") or die("Unable to open file!");
     if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY)=="level=premium") {
        $str = file_get_contents($file_premium, "r") or die("Unable to open file!");
     }
