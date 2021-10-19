@@ -81,3 +81,14 @@ https://example.com/sdfawfadcva/sub.php?level=premium
 ```
 https://example.com/sdfawfadcva/sub.php
 ```
+
+如果只需要 Vmess 而不需要其他链接，加上 `type=vmess` 参数：
+```
+https://example.com/sdfawfadcva/sub.php?type=vmess
+https://example.com/sdfawfadcva/sub.php?level=premium&type=vmess
+```
+或者加上 `type=ss` 参数，只获取Shadowsocks链接：
+```
+https://example.com/sdfawfadcva/sub.php?type=ss
+https://example.com/sdfawfadcva/sub.php?level=premium&type=ss
+```
