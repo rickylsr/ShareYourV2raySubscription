@@ -53,7 +53,7 @@ ss://xxxxxxxxxxxxxxxxxxxxxxxx
 vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-如果不需要 premium 功能，可以任意填写两个文本框中的一个。点击提交，网页将自动提取各个节点的别名，并以html注释符包裹置于每条链接之前，例如：
+如果不需要 premium 功能，可以任意填写两个文本框中的一个。点击提交，网页将**自动**提取各个节点的别名，并**自动**以html注释符包裹置于每条链接之前，例如：
 
 ```
 <!--节点1名称--->
