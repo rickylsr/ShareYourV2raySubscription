@@ -2,25 +2,29 @@
 
 自托管的V2ray订阅链接与节点管理器。
 
-## 功能
-- 生成属于自己的 V2ray 订阅链接
-- 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
-- 整洁的 bootstrap 自适应页面
-- 自动提取分享链接中每一个节点的别名
+Self-hosted V2ray subscription.
 
-## 截图
+## 功能 Features
+
+- 生成属于自己的 V2ray 订阅链接 Generate your own V2ray subscription links
+- 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接 Edit and store multiple VMESS and Shadowsocks share links simply on a web page
+- 整洁的 bootstrap 自适应页面 Bootstrap adaptive pages
+- 自动提取分享链接中每一个节点的别名  Automatic extraction of the alias of each node in the share link
+
+
+## 截图 Screenshot
 
 ![image](https://github.com/rickylsr/ShareYourV2raySubscription/blob/main/Screenshot.png)
 
 
-## 配置向导
+## 配置向导 Quick Start
 
-### 运行环境
+### 运行环境 Environment
 
 - php 8.0
-- nginx 或 apache （为安全起见，建议设置好目录权限以防未经授权的访问）
+- nginx or apache （为安全起见，建议设置好目录权限以防未经授权的访问）
 
-### 配置步骤
+### 配置步骤 Configuration
 
 在网站目录内新建一个目录，作为编辑器目录，并在 nginx 或 apache 中设置好访问目录的用户名、密码。
 
