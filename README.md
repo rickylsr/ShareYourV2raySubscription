@@ -7,12 +7,13 @@ Self-hosted V2ray subscription.
 ## 功能 Features
 
 - 生成属于自己的 V2ray 订阅链接 
--  Generate your own V2ray subscription links
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
-- Edit and store multiple VMESS and Shadowsocks share links simply on a web page
 - 整洁的 bootstrap 自适应页面 
-- Bootstrap adaptive pages
 - 自动提取分享链接中每一个节点的别名  
+
+- Generate your own V2ray subscription links
+- Edit and store multiple VMESS and Shadowsocks share links simply on a web page
+- Bootstrap adaptive pages
 - Automatic extraction of the alias of each node in the share link
 
 
