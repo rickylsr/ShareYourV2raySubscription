@@ -11,6 +11,7 @@ Self-hosted V2ray subscription.
 - 整洁的 bootstrap 自适应页面 
 - 自动提取分享链接中每一个节点的别名  
 
+
 - Generate your own V2ray subscription links
 - Edit and store multiple VMESS and Shadowsocks share links simply on a web page
 - Bootstrap adaptive pages
