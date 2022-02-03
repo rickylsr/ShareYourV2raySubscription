@@ -1,6 +1,6 @@
-# ShareYourV2raySubscription
+# ShareYourV2raySubscription 2.0 Beta
 
-自托管的V2ray订阅链接与节点管理器。
+自托管的V2ray订阅链接与节点管理器升级版。
 
 Self-hosted V2ray subscription.
 
