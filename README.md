@@ -4,6 +4,12 @@
 
 Self-hosted V2ray subscription.
 
+## Beta Functions
+
+- [x] sub.php update from path authentication to url key authentication
+- [ ] editor.php update function to edit url key of sub.php
+- [ ] V2 nodes information to encrypted by url key
+
 ## 功能  
 
 - 生成属于自己的 V2ray 订阅链接 
