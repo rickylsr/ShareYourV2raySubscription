@@ -6,9 +6,10 @@ Self-hosted V2ray subscription.
 
 ## Beta Functions
 
-- [x] sub.php update from path authentication to url key authentication
-- [ ] editor.php update function to edit url key of sub.php
+- [x] updated sub.php authentication from web path to url key
+- [ ] update to enable function to edit url key of sub.php in editor.php 
 - [ ] V2 nodes information to encrypted by url key
+- [ ] update editor.php authentication from nginx to php authentication
 
 ## 功能  
 
