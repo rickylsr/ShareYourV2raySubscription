@@ -9,6 +9,7 @@ Self-hosted V2ray subscription.
 - 生成属于自己的 V2ray 订阅链接 
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
 - 整洁的 bootstrap 自适应页面 
+- 订阅分享页面通过url key进行验证 (新功能！)
 - 自动提取分享链接中每一个节点的别名 (新功能！)
 - 在编辑器中编辑accesskey并决定是否明文储存（可选仅md5存储）(新功能！)
 - 在编辑器中直接复制可以用于各种客户端软件的订阅链接 (新功能！)
@@ -17,7 +18,7 @@ Self-hosted V2ray subscription.
 - Generate your own V2ray subscription links
 - Edit and store multiple VMESS and Shadowsocks share links simply on a web page
 - Automatic extraction of the alias of each node in the share link
-- Authentication via url access key
+- Authentication via url access key (NEW FEATURE!)
 - Edit and one-key generate access-key of sub.php (NEW FEATURE!)
 - Decide whether to store key on server (NEW FEATURE!)
 - Option to share subscription link on editor page (NEW FEATURE!)
