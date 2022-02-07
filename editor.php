@@ -142,14 +142,14 @@ $text_key_md5 = file_get_contents($key_md5);
                     <div class ="form-group">
                         <!--<label for="sharelink_premium">分享链接（Premium）</label>-->
                     <div class="col-sm-8">
-                        <input name="sharelink_premium" id="sharelink_premium" type="text" class="form-control"></input>
+                        <input name="sharelink_premium" id="sharelink_premium" type="text" class="form-control" value="<?php if($text_key == ""){echo "";}else{echo $shareurl."?key=".$text_key."&level=premium";}; ?>"/>
                     </div>
                     <div class="col-sm-4"><button type="button" class="btn btn-success" onclick="copysharelink()">复制Premium分享链接</button></div>
                 </div>
                     <div class ="form-group">
                         <!--<label for="sharelink">分享链接（普通）</label>-->
                     <div class="col-sm-8">
-                        <input name="sharelink" id="sharelink" type="text" class="form-control"></input>
+                        <input name="sharelink" id="sharelink" type="text" class="form-control" value="<?php if($text_key == ""){echo "";}else{echo $shareurl."?key=".$text_key;}; ?>"></input>
                     </div>
                     <div class="col-sm-4"><button type="button" class="btn btn-success" onclick="copysharelink2()">复制普通线路分享链接</button></div>
                 </div>
