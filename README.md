@@ -6,8 +6,15 @@ Self-hosted V2ray subscription.
 
 ## Beta Functions
 
-- [x] updated sub.php authentication from web path to url key
-- [ ] update to enable function to edit url key of sub.php in editor.php 
+### Initial Plans
+
+- [x] sub.php - authentication via url key instead of path
+- [ ] editor.php - edit access key of sub.php
+- [ ] editor.php - decide whether to store key on server
+- [ ] editor.php - option to share subscription link on editor page
+
+### Long Term Plans
+
 - [ ] V2 nodes information to encrypted by url key
 - [ ] update editor.php authentication from nginx to php authentication
 
@@ -93,9 +100,9 @@ vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### 订阅链接
 
-Premium线路：sub.php 的网页链接，并附加参数 `level=premium`，例如
+Premium线路：sub.php 的网页链接，并附加参数`key=【你的密钥】`以及 `level=premium`，并用`&`连接，例如
 ```
-https://example.com/sdfawfadcva/sub.php?level=premium
+https://example.com/sdfawfadcva/sub.php?key=【你的密钥】&level=premium
 ```
 
 普通线路：sub.php 的网页链接，例如
