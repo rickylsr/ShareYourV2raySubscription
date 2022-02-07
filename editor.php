@@ -1,12 +1,12 @@
 <?php
 
 // configuration
-$url = 'http://doc2.rickylee.monster/2.0/editor/index.php';
-$file = '/www/wwwroot/doc2.rickylee.monster/2.0/res.txt';
-$file_premium = '/www/wwwroot/doc2.rickylee.monster/2.0/res_premium.txt';
-$key = '/www/wwwroot/doc2.rickylee.monster/2.0/key.txt';
-$key_md5 = '/www/wwwroot/doc2.rickylee.monster/2.0/keymd5.txt';
-$shareurl = 'doc2.rickylee.monster/2.0/sub.php';
+$url = '';
+$file = '';
+$file_premium = '';
+$key = '';
+$key_md5 = '';
+$shareurl = '';
 
 function removeComment($content){
         // (\/\*.*\*\/)|(#.*?\n)|(\/\/.*?\n)|
