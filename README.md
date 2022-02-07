@@ -1,26 +1,42 @@
-# ShareYourV2raySubscription
+# ShareYourV2raySubscription 2.0 Beta
 
-自托管的V2ray订阅链接与节点管理器。
+自托管的V2ray订阅链接与节点管理器升级版。
 
 Self-hosted V2ray subscription.
 
-## 功能 
+## 功能  
 
 - 生成属于自己的 V2ray 订阅链接 
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
 - 整洁的 bootstrap 自适应页面 
 - 自动提取分享链接中每一个节点的别名
+- 订阅分享页面通过url key进行验证 (新功能！)
+- 在编辑器中编辑accesskey并决定是否明文储存（可选仅md5存储）(新功能！)
+- 在编辑器中直接复制可以用于各种客户端软件的订阅链接 (新功能！)
 
 ### Features
 - Generate your own V2ray subscription links
 - Edit and store multiple VMESS and Shadowsocks share links simply on a web page
-- Bootstrap adaptive pages
 - Automatic extraction of the alias of each node in the share link
+- Authentication via url access key (NEW FEATURE!)
+- Edit and one-key generate access-key of sub.php (NEW FEATURE!)
+- Decide whether to store key on server (NEW FEATURE!)
+- Option to share subscription link on editor page (NEW FEATURE!)
 
+
+### Long Term Plans
+
+- [ ] V2 nodes information to encrypted by url key
+- [ ] update editor.php authentication from nginx to php authentication
+
+## 支持协议
+
+- [x] VMESS
+- [x] Shadowsocks
 
 ## 截图 Screenshot
 
-![image](https://github.com/rickylsr/ShareYourV2raySubscription/blob/main/Screenshot.png)
+![image](https://github.com/rickylsr/ShareYourV2raySubscription/blob/main/SYVS.2.0.png)
 
 
 ## 配置向导 Quick Start
@@ -36,19 +52,26 @@ Self-hosted V2ray subscription.
 
 打包下载本 repository，将 bootstrap 文件夹和 index 放入编辑器目录。
 
-在编辑器目录中新建两个空 txt 文件，用于存储普通线路订阅源文件和存储 premium 线路订阅源文件；并修改 index.php 中的路径和 url 设置：
+在编辑器目录中新建4个空 txt 文件，用于存储普通线路订阅源文件、存储 premium 线路订阅源文件、存储AccessKey明文及AccessKey密文；
+
+用文本编辑器修改 index.php 中的路径和 url 设置：
 
 ```
 $url = ''; //在这里填写 index.php 所在的网页 url，例如 https://example.com/editor/index.php
 $file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
 $file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
+$key = '';//在这里填写存储AccessKey明文的txt文件绝对路径，例如 /www/example.com/editor/key.txt
+$key_md5 = '';//在这里填写存储AccessKey密文的txt文件的绝对路径，例如 /www/example.com/editor/md5.txt
+$shareurl = '';//在这里填写sub.php所在的网页 url，例如 https://example.com/sub.php
 ```
 
-在网站目录内新建另一个目录作为订阅链接目录，名称尽量复杂。可以使用密码生成器生成一个复杂的目录名称。将sub.php拷贝进该目录，并修改 sub.php 中的路径设置
+在网站目录内新建另一个目录放 sub.php ，用文本编辑器编辑修改sub.php中的路径设置
+
 
 ```
-$file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
-$file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
+    $key_md5 = '';//在这里填写存储AccessKey MD5文件的绝对路径，例如 /www/example.com/editor/md5.txt
+    $file = '';//在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
+    $file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
 ```
 
 ## 使用
@@ -82,23 +105,38 @@ vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### 订阅链接
 
-Premium线路：sub.php 的网页链接，并附加参数 `level=premium`，例如
+#### 首次使用
+
+- 生成订阅链接（以下方法二选一）
+-   点击“一键生成密钥”（推荐）
+-   手动在上面文本框中输入密钥并点击生成分享链接
+- 点击按钮直接复制或手动复制
+- 根据需要勾选是否明文保存密码（若勾选，则在忘记密码时下一次只能重新生成新的access key）
+- 点击立即保存
+
+#### 再次使用
+
+忘记订阅链接时，重新生成或设置access key，并复制订阅链接
+
+#### 手动设置
+
+Premium线路：sub.php 的网页链接，并附加参数 `key=【你的access key】&level=premium`，例如
 ```
-https://example.com/sdfawfadcva/sub.php?level=premium
+https://example.com/sub.php?key=【你的access key】&level=premium
 ```
 
-普通线路：sub.php 的网页链接，例如
+普通线路：sub.php 的网页链接，并附加参数 `key=【你的access key】`，例如
 ```
-https://example.com/sdfawfadcva/sub.php
+https://example.com/sub.php?key=【你的access key】
 ```
 
 如果只需要 Vmess 而不需要其他链接，加上 `type=vmess` 参数：
 ```
-https://example.com/sdfawfadcva/sub.php?type=vmess
-https://example.com/sdfawfadcva/sub.php?level=premium&type=vmess
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】type=vmess
+https://example.com/sdfawfadcva/sub.php??key=【你的access key】evel=premium&type=vmess
 ```
 或者加上 `type=ss` 参数，只获取Shadowsocks链接：
 ```
-https://example.com/sdfawfadcva/sub.php?type=ss
-https://example.com/sdfawfadcva/sub.php?level=premium&type=ss
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】type=ss
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】level=premium&type=ss
 ```
