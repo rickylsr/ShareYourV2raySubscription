@@ -27,7 +27,8 @@ Self-hosted V2ray subscription 2.0.
 ### Long Term Plans
 
 - [ ] V2 nodes information to encrypted by url key
-- [ ] update editor.php authentication from nginx to php authentication
+- [ ] Upgrade editor.php authentication from nginx to php authentication
+- [ ] Add a setup tutorial with more details (proposed by [issue #2](https://github.com/rickylsr/ShareYourV2raySubscription/issues/2))
 
 ## 支持协议
 
