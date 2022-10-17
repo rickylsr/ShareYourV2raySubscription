@@ -100,6 +100,10 @@ ss://xxxxxxxxxxxxxxxxxxxxxxxx
 vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
+> **Warning**
+
+> 目前只有V2rayN生成的vmess和ss链接经过测试，详见 [Issue 2](https://github.com/rickylsr/ShareYourV2raySubscription/issues/3)
+
 编辑或删除链接，点击提交即可。不要编辑 ```<!--节点1名称--->``` 部分。删除或编辑链接时最好整行编辑，以避免未知错误。
 
 既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点 premium 下面的提交按钮，普通文本框内的更改将会丢失。）
@@ -133,11 +137,11 @@ https://example.com/sub.php?key=【你的access key】
 
 如果只需要 Vmess 而不需要其他链接，加上 `type=vmess` 参数：
 ```
-https://example.com/sdfawfadcva/sub.php?key=【你的access key】type=vmess
-https://example.com/sdfawfadcva/sub.php??key=【你的access key】evel=premium&type=vmess
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】&type=vmess
+https://example.com/sdfawfadcva/sub.php??key=【你的access key】&level=premium&type=vmess
 ```
 或者加上 `type=ss` 参数，只获取Shadowsocks链接：
 ```
-https://example.com/sdfawfadcva/sub.php?key=【你的access key】type=ss
-https://example.com/sdfawfadcva/sub.php?key=【你的access key】level=premium&type=ss
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】&type=ss
+https://example.com/sdfawfadcva/sub.php?key=【你的access key】&level=premium&type=ss
 ```
