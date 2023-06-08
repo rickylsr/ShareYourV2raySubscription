@@ -4,7 +4,7 @@
 
 Self-hosted V2ray subscription 2.0.
 
-## 功能  
+## 功能
 
 - 生成属于自己的 V2ray 订阅链接 
 - 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
@@ -14,72 +14,65 @@ Self-hosted V2ray subscription 2.0.
 - 在编辑器中编辑accesskey并决定是否明文储存（可选仅md5存储）(新功能！)
 - 在编辑器中直接复制可以用于各种客户端软件的订阅链接 (新功能！)
 
-### Features
-- Generate your own V2ray subscription links
-- Edit and store multiple VMESS and Shadowsocks share links simply on a web page
-- Automatic extraction of the alias of each node in the share link
-- Authentication via url access key (NEW FEATURE!)
-- Edit and one-key generate access-key of sub.php (NEW FEATURE!)
-- Decide whether to store key on server (NEW FEATURE!)
-- Option to share subscription link on editor page (NEW FEATURE!)
+### 长期规划
 
-
-### Long Term Plans
-
-- [ ] V2 nodes information to encrypted by url key
-- [ ] Upgrade editor.php authentication from nginx to php authentication
-- [ ] Add a setup tutorial with more details (proposed by [issue #2](https://github.com/rickylsr/ShareYourV2raySubscription/issues/2))
+- [ ] 使用url key加密节点信息
+- [ ] 升级index.php的验证
 
 ## 支持协议
 
-- [x] VMESS
+- [x] VMESS / VLESS
 - [x] Shadowsocks
 
-## 截图 Screenshot
+## 截图 
 
 ![image](https://github.com/rickylsr/ShareYourV2raySubscription/blob/main/SYVS.2.0.png)
 
 
-## 配置向导 Quick Start
+## 配置向导
 
-### 运行环境 Environment
+### 运行环境 
 
 - php 8.0
-- nginx or apache （为安全起见，建议设置好目录权限以防未经授权的访问）
+- nginx or apache 
 
-### 配置步骤 Configuration
+### 配置步骤
 
 在网站目录内新建一个目录，作为编辑器目录，并在 nginx 或 apache 中设置好访问目录的用户名、密码。
 
-打包下载本 repository，将 bootstrap 文件夹和 index 放入编辑器目录。
+打包下载本 repository，将 admin 文件夹和 public 文件夹放入网站目录内的某个地方。
 
-在编辑器目录中新建4个空 txt 文件，用于存储普通线路订阅源文件、存储 premium 线路订阅源文件、存储AccessKey明文及AccessKey密文；
+在 admin 目录中新建 4 个空 txt 文件，它们分别用于： 
+- 存储普通线路订阅源文件
+- 存储 premium 线路订阅源文件
+- 存储AccessKey明文及
+- AccessKey密文；
 
-用文本编辑器修改 index.php 中的路径和 url 设置：
-
-```
-$url = ''; //在这里填写 index.php 所在的网页 url，例如 https://example.com/editor/index.php
-$file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
-$file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
-$key = '';//在这里填写存储AccessKey明文的txt文件绝对路径，例如 /www/example.com/editor/key.txt
-$key_md5 = '';//在这里填写存储AccessKey密文的txt文件的绝对路径，例如 /www/example.com/editor/md5.txt
-$shareurl = '';//在这里填写sub.php所在的网页 url，例如 https://example.com/sub.php
-```
-
-在网站目录内新建另一个目录放 sub.php ，用文本编辑器编辑修改sub.php中的路径设置
-
+用文本编辑器修改 admin/index.php 中的路径和 url 设置：
 
 ```
-    $key_md5 = '';//在这里填写存储AccessKey MD5文件的绝对路径，例如 /www/example.com/editor/md5.txt
-    $file = '';//在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub.txt
-    $file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/editor/sub2.txt
+$url = ''; //在这里填写 index.php 所在的网页 url，例如 https://example.com/admin/index.php
+$file = ''; //在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/admin/sub.txt
+$file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/admin/sub2.txt
+$key = '';//在这里填写存储AccessKey明文的txt文件绝对路径，例如 /www/example.com/admin/key.txt
+$key_md5 = '';//在这里填写存储AccessKey密文的txt文件的绝对路径，例如 /www/example.com/admin/md5.txt
+$shareurl = '';//在这里填写sub.php所在的网页 url，例如 https://example.com/public/sub.php
 ```
+
+用文本编辑器编辑修改 public/sub.php中的路径设置
+
+```
+    $key_md5 = '';//在这里填写存储AccessKey MD5文件的绝对路径，例如 /www/example.com/admin/md5.txt
+    $file = '';//在这里填写存储普通线路订阅源文件的绝对路径，例如 /www/example.com/admin/sub.txt
+    $file_premium = '';//在这里填写存储 premium 线路订阅源文件的绝对路径，例如 /www/example.com/admin/sub2.txt
+```
+你可以更改sub.php和各种路径的名字，但请记得同时更改在配置文件里的路径
 
 ## 使用
 
 ### 添加和编辑节点
 
-访问index.php，在文本框中填写 `vmess://` 或 `ss://` 链接，每行填写一个。例如：
+访问 index.php，在文本框中填写 `vmess://` 或 `ss://` 链接，每行填写一个。例如：
 
 ```
 vmess://xxxxxxxxxxxxxxxxxxxxxxxxx
@@ -145,3 +138,6 @@ https://example.com/sdfawfadcva/sub.php??key=【你的access key】&level=premiu
 https://example.com/sdfawfadcva/sub.php?key=【你的access key】&type=ss
 https://example.com/sdfawfadcva/sub.php?key=【你的access key】&level=premium&type=ss
 ```
+### 从旧版本升级
+
+只需要备份四个txt文件，删除整个文件夹，重新填写一下php文件里的几个路径和url即可
