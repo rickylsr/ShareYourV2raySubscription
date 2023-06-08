@@ -1,23 +1,20 @@
 # ShareYourV2raySubscription 2.0
 
-自托管的V2ray订阅链接与节点管理器2.0。
-
-Self-hosted V2ray subscription 2.0.
+自托管的V2ray订阅链接与节点管理器（2.0）。
 
 ## 功能
 
-- 生成属于自己的 V2ray 订阅链接 
-- 在网页上编辑存储多个 VMESS 和 Shadowsocks 分享链接
+- 生成属于自己的 V2ray 订阅链接, 可以用于各种客户端软件的订阅链接
+- 在网页上编辑存储多个 VMESS/VLESS 和 Shadowsocks 分享链接
 - 整洁的 bootstrap 自适应页面 
 - 自动提取分享链接中每一个节点的别名
-- 订阅分享页面通过url key进行验证 (新功能！)
-- 在编辑器中编辑accesskey并决定是否明文储存（可选仅md5存储）(新功能！)
-- 在编辑器中直接复制可以用于各种客户端软件的订阅链接 (新功能！)
+- 订阅分享页面通过 access key 进行验证
+- 在编辑器中编辑 access key 并决定是否明文储存（可选仅md5存储）
 
 ### 长期规划
 
-- [ ] 使用url key加密节点信息
-- [ ] 升级index.php的验证
+- [ ] 使用 access key 加密节点信息
+- [ ] 升级 index.php 的验证
 
 ## 支持协议
 
@@ -95,11 +92,11 @@ vmess://xxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 > **Warning**
 
-> 目前只有V2rayN生成的vmess和ss链接经过测试，详见 [Issue 2](https://github.com/rickylsr/ShareYourV2raySubscription/issues/3)
+> 目前只有V2rayN生成的vmess/vless和ss链接经过测试，详见 [Issue 2](https://github.com/rickylsr/ShareYourV2raySubscription/issues/3)
 
 编辑或删除链接，点击提交即可。不要编辑 ```<!--节点1名称--->``` 部分。删除或编辑链接时最好整行编辑，以避免未知错误。
 
-既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点 premium 下面的提交按钮，普通文本框内的更改将会丢失。）
+既编辑premium又编辑了普通线路的，点击提交按钮只会提交对应单个文本框内的更改。（比如点 premium 下面的提交按钮，普通文本框内的更改将会丢失。）建议编辑完一个框里的先点击保存一下。
 
 ### 订阅链接
 
