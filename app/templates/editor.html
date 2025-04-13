@@ -32,7 +32,7 @@
                 <button type="submit" class="btn btn-primary mt-2">立即保存</button>
                 <button type="button" class="btn btn-success mt-2" onclick="generatepwd()">一键生成密钥</button>
             </form>
-            
+            {# 
             <!-- 分享链接显示 -->
             <div class="mt-4">
                 <div class="mb-3">
@@ -44,79 +44,88 @@
                 <button type="button" class="btn btn-success" onclick="copyLink('sharelink')">复制普通线路分享链接</button>
                 <button type="button" class="btn btn-success" onclick="copyLink('sharelink_premium')">复制Premium分享链接</button>
             </div>
-            
+            #}
             <hr/>
-            
-            <!-- 普通线路编辑 -->
-            <h3>普通线路</h3>
-            <form action="" method="post" id="linksForm">
-                <div id="linksContainer">
-                    {% for link in links %}
-                    <div class="link-item card p-2">
-                        <div class="mb-2">
-                            <label>链接:</label>
-                            <input type="text" class="form-control link-url" value="{{ link.raw }}">
-                        </div>
-                        <div class="mb-2">
-                            <label>类型:</label>
-                            <span class="badge bg-secondary">{{ link.type }}</span>
-                            <label>备注:</label>
-                            <span class="badge bg-info">{{ link.comment }}</span>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <button type="button" class="btn btn-primary mt-2" id="addLinkBtn">添加链接</button>
-                <!-- 隐藏域保存链接 JSON -->
-                <input type="hidden" name="links_json" id="linksJson">
-                <button type="submit" class="btn btn-success mt-2">保存普通线路</button>
-            </form>
-            
-            <hr/>
-            
-            <!-- Premium 线路编辑 -->
-            <h3>Premium 线路</h3>
-            <form action="" method="post" id="premiumLinksForm">
-                <div id="premiumLinksContainer">
-                    {% for link in links_premium %}
-                    <div class="link-item card p-2">
-                        <div class="row">
-                            <div class="col-auto pe-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
-                                    <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                                </svg>
-                            </div>
-                            <div class="col">
-                                <div class="mb-2">
-                                    <label>链接:</label>
-                                    <input type="text" class="form-control link-url" value="{{ link.raw }}">
-                                </div>
-                                <div class="mb-2">
-                                    <label>类型:</label>
-                                    <span class="badge bg-secondary">{{ link.type }}</span>
-                                    <label>备注:</label>
-                                    <span class="badge bg-info">{{ link.comment }}</span>
-                                </div>
-                                <div>
-                                    <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                                    <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                                    <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+            <ul class="nav nav-underline mb-3" id="myTab" role="tablist">
+                {% for group_name, links in groups.items() %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if loop.first %}active{% endif %}" id="{{ loop.index }}-tab" data-bs-toggle="tab" data-bs-target="#{{ loop.index }}-tab-pane" type="button" role="tab" aria-controls="{{ loop.index }}-tab-pane" aria-selected="true">{{ group_name }}</button>
+                </li>
+                {% endfor %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link icon-link disabled" aria-disabled="true" id="add-group-tab" data-bs-toggle="tab" data-bs-target="#add-group-tab-pane" type="button" role="tab" aria-controls="add-group-tab-pane" aria-selected="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        添加分组
+                    </button>
+                </li>
+            </ul>
+            {% for group_name, links in groups.items() %}
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ loop.index }}-tab-pane" role="tabpanel" aria-labelledby="{{ loop.index }}-tab" tabindex="0">
+                    <button type="button" class="btn btn-warning btn-sm mt-2 icon-link toggleLinksMode">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                            <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                        </svg>
+                        切换到批量导入模式
+                    </button>
+                    <form action="" method="post" class="linksForm mt-3">
+                        <div class="linksContainer">
+                            {% for link in links %}
+                            <div class="link-item card p-2">
+                                <div class="row">
+                                    <div class="col-auto pe-0 draggable">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
+                                            <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                        </svg>
+                                    </div>
+                                    <div class="col">
+                                        <div class="mb-2">
+                                            <label>链接:</label>
+                                            <input type="text" class="form-control link-url" value="{{ link.raw }}">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label>类型:</label>
+                                            <span class="badge bg-secondary">{{ link.type }}</span>
+                                            <label>备注:</label>
+                                            <span class="badge bg-info">{{ link.comment }}</span>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
+                                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
+                                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
-                    </div>
-                    {% endfor %}
+                        <!-- 文本模式：多行 textarea，初始隐藏 -->
+                        <div class="linksTextareaContainer" style="display:none;">
+                            <textarea class="form-control linksTextarea" rows="8">{% for link in links %}{{ link.raw }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-1 icon-link addLinkBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-dotted" viewBox="0 0 16 16">
+                                <path d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0zm2.292 0h-.917v1h.917zm1.833 0h-.917v1h.917zm1.833 0h-.916v1h.916zm1.834 0h-.917v1h.917zm1.833 0h-.917v1h.917zM13.5 0h-.458v1h.458q.151 0 .293.029l.194-.981A2.5 2.5 0 0 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415zM16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zM0 5.708v.917h1v-.917zm16 .917v-.917h-1v.917zM0 7.542v.916h1v-.916zm15 .916h1v-.916h-1zM0 9.375v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .916v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458h-1v.458q0 .151-.029.293l.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                            </svg>
+                            添加链接
+                        </button>
+                        <!-- 隐藏域保存链接 JSON -->
+                        <input type="hidden" name="links_json_{{ group_name }}" class="linksJson">
+                        <div class="row mt-2">
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary mt-2">保存</button>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-danger mt-2" disabled>删除 "{{ group_name}}" 分组</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <button type="button" class="btn btn-primary mt-2" id="addPremiumLinkBtn">添加链接</button>
-                <input type="hidden" name="links_json_premium" id="linksJsonPremium">
-                <button type="submit" class="btn btn-success mt-2">保存 Premium 线路</button>
-            </form>
-            
+            </div>
+            {% endfor %}
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
@@ -145,135 +154,144 @@
                 document.getElementById('accesskey').value = password;
                 generatesharelink();
             }
-            // 初始化普通线路排序
-            Sortable.create(document.getElementById('linksContainer'), {
-                animation: 150
-            });
-          
-            // 初始化 Premium 线路排序
-            Sortable.create(document.getElementById('premiumLinksContainer'), {
-                animation: 150
+
+            // 初始化线路排序
+            document.querySelectorAll('.linksContainer').forEach(function(element) {
+                Sortable.create(element, {
+                    animation: 150,
+                    handle: '.draggable'
+                });
             });
             
-            // 下面是原有添加/删除按钮的事件绑定代码……
-            document.getElementById('addLinkBtn').addEventListener('click', function(){
-                var container = document.getElementById('linksContainer');
+            // 删除，上移，下移的按钮事件
+            document.querySelectorAll('.linksContainer').forEach(function(element) {
+                element.addEventListener('click', function(e) {
+                    if(e.target.classList.contains('remove-link')) {
+                    e.target.closest('.link-item').remove();
+                    } else if(e.target.classList.contains('move-up')) {
+                    var item = e.target.closest('.link-item');
+                    if(item.previousElementSibling)
+                        item.parentNode.insertBefore(item, item.previousElementSibling);
+                    } else if(e.target.classList.contains('move-down')) {
+                    var item = e.target.closest('.link-item');
+                    if(item.nextElementSibling)
+                        item.parentNode.insertBefore(item.nextElementSibling, item);
+                    }
+                });
+            });
+           
+
+            function createLinkComponent(url) {
                 var newDiv = document.createElement('div');
                 newDiv.className = 'link-item card p-2';
                 newDiv.innerHTML = `
                     <div class="row">
-                        <div class="col-auto pe-0">
+                        <div class="col-auto pe-0 draggable">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
                                 <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
                             </svg>
                         </div>
                         <div class="col">
                             <div class="mb-2">
-                            <label>链接:</label>
-                            <input type="text" class="form-control link-url" value="">
-                        </div>
-                        <div class="mb-2">
-                            <label>类型:</label>
-                            <span class="badge bg-secondary">unknown</span>
-                            <label>备注:</label>
-                            <span class="badge bg-info"></span>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
-                        </div>
-                    </div>
-                   
-                `;
-                container.appendChild(newDiv);
-            });
-            
-            // 以下删除，上移，下移的按钮事件逻辑依然适用
-            document.getElementById('linksContainer').addEventListener('click', function(e) {
-                if(e.target.classList.contains('remove-link')) {
-                   e.target.closest('.link-item').remove();
-                } else if(e.target.classList.contains('move-up')) {
-                   var item = e.target.closest('.link-item');
-                   if(item.previousElementSibling)
-                      item.parentNode.insertBefore(item, item.previousElementSibling);
-                } else if(e.target.classList.contains('move-down')) {
-                   var item = e.target.closest('.link-item');
-                   if(item.nextElementSibling)
-                      item.parentNode.insertBefore(item.nextElementSibling, item);
-                }
-            });
-          
-            // 同理，为 Premium 线路容器添加相同功能
-            document.getElementById('addPremiumLinkBtn').addEventListener('click', function(){
-                var container = document.getElementById('premiumLinksContainer');
-                var newDiv = document.createElement('div');
-                newDiv.className = 'link-item card p-2';
-                newDiv.innerHTML = `
-                    <div class="row">
-                        <div class="col-auto pe-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
-                                <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
-                            </svg>
-                        </div>
-                        <div class="col">
+                                <label>链接:</label>
+                                <input type="text" class="form-control link-url" value="${url || ''}">
+                            </div>
                             <div class="mb-2">
-                            <label>链接:</label>
-                            <input type="text" class="form-control link-url" value="">
-                        </div>
-                        <div class="mb-2">
-                            <label>类型:</label>
-                            <span class="badge bg-secondary">unknown</span>
-                            <label>备注:</label>
-                            <span class="badge bg-info"></span>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                                <label>类型:</label>
+                                <span class="badge bg-secondary">待解析</span>
+                                <label>备注:</label>
+                                <span class="badge bg-info">待解析</span>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
+                                <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
+                                <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                            </div>
                         </div>
                     </div>
                 `;
-                container.appendChild(newDiv);
+                return newDiv;
+            }
+
+            // 为所有 addLinkBtn 按钮绑定点击事件
+            document.querySelectorAll('.addLinkBtn').forEach(function(btn) {
+                btn.addEventListener('click', function(){
+                    // 查找当前按钮前面的第一个具有 class "linksContainer" 的元素
+                    var container = btn.previousElementSibling;
+                    while(container && !container.classList.contains('linksContainer')) {
+                        container = container.previousElementSibling;
+                    }
+                    if(container) {
+                        container.appendChild(createLinkComponent());
+                    }
+                });
             });
             
-            document.getElementById('premiumLinksContainer').addEventListener('click', function(e) {
-                if(e.target.classList.contains('remove-link')) {
-                   e.target.closest('.link-item').remove();
-                } else if(e.target.classList.contains('move-up')) {
-                   var item = e.target.closest('.link-item');
-                   if(item.previousElementSibling)
-                      item.parentNode.insertBefore(item, item.previousElementSibling);
-                } else if(e.target.classList.contains('move-down')) {
-                   var item = e.target.closest('.link-item');
-                   if(item.nextElementSibling)
-                      item.parentNode.insertBefore(item.nextElementSibling, item);
+            function toggleLinksMode(btn, comp, text, textarea) {
+                if(comp.style.display === 'none'){
+                    // 当前是文本模式，切换到组件模式
+                    // 解析 textarea 内容并重建组件列表到 currentLinksContainer 中
+                    var textContent = textarea.value;
+                    var lines = textContent.split(/\r?\n/);
+                    comp.innerHTML = ''; // 清空当前容器
+                    lines.forEach(function(url) {
+                        url = url.trim();
+                        if(url) {
+                            comp.appendChild(createLinkComponent(url));
+                        }
+                    });
+                    comp.style.display = 'block';
+                    text.style.display = 'none';
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                            <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                        </svg>
+                        切换到批量导入模式
+                    `;
+                } else {
+                    // 切换到文本模式，从组件中拼接文本
+                    var items = comp.querySelectorAll('.link-item .link-url');
+                    var arr = [];
+                    items.forEach(function(item) {
+                        var url = item.value.trim();
+                        if(url) { arr.push(url); }
+                    });
+                    textarea.value = arr.join("\n\n");
+                    comp.style.display = 'none';
+                    text.style.display = 'block';
+                    btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                        <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                    </svg>
+                    切换到组件模式`;
                 }
+            }
+
+            // 切换模式：组件 <--> 多行文本
+            document.querySelectorAll('.toggleLinksMode').forEach(function(btn) {
+                btn.addEventListener('click', function(){
+                    var comp = this.parentElement.querySelector('.linksContainer');
+                    var text = this.parentElement.querySelector('.linksTextareaContainer');
+                    var textarea = text.querySelector('.linksTextarea');
+                    toggleLinksMode(btn, comp, text, textarea);
+                });
             });
             
             // 提交前将数据转换为 JSON
-            document.getElementById('linksForm').addEventListener('submit', function(e) {
-                var items = document.querySelectorAll('#linksContainer .link-item');
-                var arr = [];
-                items.forEach(function(item) {
-                    var url = item.querySelector('.link-url').value.trim();
-                    if(url){
-                        arr.push({ raw: url });
-                    }
+            document.querySelectorAll('.linksForm').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault(); // 阻止默认提交
+                    var items = form.querySelectorAll('.link-item');
+                    var arr = [];
+                    items.forEach(function(item) {
+                        var url = item.querySelector('.link-url').value.trim();
+                        if(url){
+                            arr.push({ raw: url });
+                        }
+                    });
+                    form.querySelector('.linksJson').value = JSON.stringify(arr);
+                    form.submit(); // 提交表单
                 });
-                document.getElementById('linksJson').value = JSON.stringify(arr);
-            });
-            
-            document.getElementById('premiumLinksForm').addEventListener('submit', function(e) {
-                var items = document.querySelectorAll('#premiumLinksContainer .link-item');
-                var arr = [];
-                items.forEach(function(item) {
-                    var url = item.querySelector('.link-url').value.trim();
-                    if(url){
-                        arr.push({ raw: url });
-                    }
-                });
-                document.getElementById('linksJsonPremium').value = JSON.stringify(arr);
             });
           </script>
     </body>

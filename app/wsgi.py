@@ -1,9 +1,9 @@
-from flask import Flask, request, abort, Response, render_template, redirect
-import base64
-import re
 import os
-import hashlib
+import base64
 import json
+import re
+import hashlib
+from flask import Flask, request, abort, Response, render_template, redirect
 from urllib.parse import unquote
 
 app = Flask(__name__)
@@ -28,8 +28,13 @@ def load_store():
         data = {}
     # 确保默认项存在
     data.setdefault('accesskey', '')
-    data.setdefault('links', [])           # 普通线路链接列表（字典列表）
-    data.setdefault('links_premium', [])   # Premium 线路链接列表（字典列表）
+    data.setdefault('key_md5', '')
+    # 默认 groups 为字典，初始包含两个常用组（也可为空，由用户添加）
+    if 'groups' not in data or not isinstance(data['groups'], dict):
+        data['groups'] = {"普通线路": [], "Premium 线路": []}
+    else:
+        data['groups'].setdefault('普通线路', [])
+        data['groups'].setdefault('Premium 线路', [])
     return data
 
 def save_store(data):
@@ -48,8 +53,7 @@ def process_share_link(url_list):
     links = []
     for line in url_list:
         raw = line.get('raw', '')
-        entry = {}  # 创建新的字典
-        entry["raw"] = raw
+        entry = {"raw": raw}
         if raw.startswith("vmess://"):
             entry["type"] = "vmess"
             try:
@@ -71,7 +75,7 @@ def process_share_link(url_list):
     return links
 
 def links_to_text(links):
-    """将链接字典列表转换为多行文本，便于在 textarea 中显示（备用）"""
+    """将链接字典列表转换为多行文本（备用）"""
     return "\n".join(link["raw"] for link in links)
 
 def remove_comment(content):
@@ -82,8 +86,9 @@ def remove_comment(content):
 def editor():
     data = load_store()
     baseurl = BASEURL if BASEURL else request.url
+
     if request.method == 'POST':
-        # 更新密钥
+        # 修改密钥
         if 'accesskey' in request.form:
             accesskey = request.form.get('accesskey', '')
             dontsavekeytf = request.form.get('dontsavekeytf', '')
@@ -91,41 +96,51 @@ def editor():
             data['key_md5'] = hashlib.md5(accesskey.encode()).hexdigest() if accesskey else ""
             save_store(data)
             return redirect(baseurl)
-        # 保存普通线路链接（JSON数据）
-        if 'links_json' in request.form:
-            links_json = request.form.get('links_json', '')
-            try:
-                links_json_data = json.loads(links_json)
-                data['links'] = process_share_link(links_json_data)
-            except Exception as e:
-                print(f"Error processing links_json: {e}")
-                data['links'] = []
+        # 添加新 group
+        if 'add_group' in request.form:
+            new_group = request.form.get('new_group_name', '').strip()
+            if new_group and new_group not in data['groups']:
+                data['groups'][new_group] = [] 
+                save_store(data)
+            return redirect(baseurl)
+        # 删除 group
+        if 'delete_group' in request.form:
+            group_to_delete = request.form.get('group_name', '').strip()
+            if group_to_delete in data['groups']:
+                del data['groups'][group_to_delete]
+                save_store(data)
+            return redirect(baseurl)
+        # 保存链接到指定 group（普通线路）
+        updated = False
+        for key in request.form:
+            if key.startswith("links_json_"):
+                updated = True
+                group = key[len("links_json_"):].strip()
+                if group not in data['groups']:
+                    data['groups'][group] = []
+                links_json = request.form.get(key, '')
+                try:
+                    links_json_data = json.loads(links_json)
+                    data['groups'][group] = process_share_link(links_json_data)
+                except Exception as e:
+                    print(f"Error processing {key}: {e}")
+                    data['groups'][group] = []
+        if updated:
             save_store(data)
             return redirect(baseurl)
-        # 保存 Premium 线路链接（JSON数据）
-        if 'links_json_premium' in request.form:
-            links_json_premium = request.form.get('links_json_premium', '')
-            try:
-                links_json_premium_data = json.loads(links_json_premium)
-                data['links_premium'] = process_share_link(links_json_premium_data)
-            except Exception as e:
-                print(f"Error processing links_json_premium: {e}")
-                data['links_premium'] = []
-            save_store(data)
-            return redirect(baseurl)
-    
+
     sharelink = ""
     sharelink_premium = ""
     if data.get('accesskey'):
         sharelink = baseurl + SHAREURL + "?key=" + data.get('accesskey')
         sharelink_premium = baseurl + SHAREURL + "?key=" + data.get('accesskey') + "&level=premium"
-    
+
+    # 为渲染模板，将 groups 传过去（groups 为一个字典）
     return render_template('editor.html',
                            accesskey=data.get('accesskey'),
                            sharelink=sharelink,
                            sharelink_premium=sharelink_premium,
-                           links=data.get('links', []),
-                           links_premium=data.get('links_premium', []))
+                           groups=data['groups'])
 
 @app.route('/subscription')
 def subscription():
@@ -140,11 +155,12 @@ def subscription():
     if key_md5 and key_md5 != hashlib.md5(key_from_url.encode()).hexdigest():
         abort(403, "Invalid key")
     
-    level = request.args.get('level', '')
-    if level == 'premium':
-        links = data.get('links_premium', [])
+    # 根据请求中指定的 group 参数获取对应的链接数据，默认为 "links"
+    group = request.args.get('group', 'links')
+    if group not in data['groups']:
+        links = []
     else:
-        links = data.get('links', [])
+        links = data['groups'][group]
     
     content = "\n".join(link["raw"] for link in links)
     content = remove_comment(content)
