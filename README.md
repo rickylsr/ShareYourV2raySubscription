@@ -1,7 +1,67 @@
 # ShareYourV2raySubscription 3.0
 
-使用Flask构建，基于docker的自托管V2ray订阅链接与节点管理器，版本号3.0。
+使用 Flask 构建，基于 Docker 的自托管 V2ray 订阅链接与节点管理器。  
+Self-hosted V2ray subscription system.
 
-Self-hosted V2ray subscription 2.0.
+## 特性
 
-# 开发中
+- 轻量级 Flask 后端
+- Docker 部署，轻松自托管
+- 支持多组订阅链接管理
+
+## 环境要求
+
+- Docker（建议 Docker 20.10+）
+- Git
+
+## 快速开始
+
+### 1. 手动构建 Docker 镜像并运行
+
+```shell
+git pull https://github.com/rickylsr/ShareYourV2raySubscription.git
+cd ShareYourV2raySubscription
+docker build -t shareyourv2raysubscription .
+docker run -d -p 8123:8000 shareyourv2raysubscription
+```
+
+完成后，你可通过 http://<server_ip>:8123 访问订阅管理系统。
+
+### 2. 数据持久化部署
+
+默认情况下，所有数据保存在容器内，当容器被删除后数据也会丢失。为持久化数据，你可以挂载主机目录到容器中。
+
+假设你在主机上创建了 `/home/ubuntu/syvs/config` 目录，运行以下命令：
+
+```shell
+docker build -t shareyourv2raysubscription .
+docker run -d \
+  -v /home/ubuntu/syvs/config:/home/app/config \
+  -p 8123:8000 \
+  shareyourv2raysubscription
+```
+
+容器内的数据将保存在 `/home/app/config/data.json`，同时映射到主机的 `/home/ubuntu/syvs/config`，这样即使容器被删除，数据也能保留。
+
+## 说明
+
+- **访问端口**：默认映射容器的 8000 端口到主机的 8123 端口，可根据需要调整 `-p` 参数。  
+- **持久化存储**：建议使用数据挂载方式确保数据安全。  
+- **重置设置**：如果需要重置订阅设置，只需清空挂载目录中的数据文件。
+
+## 维护与更新
+
+- 拉取最新代码后，重新构建镜像即可更新系统：  
+  ```shell
+  git pull https://github.com/rickylsr/ShareYourV2raySubscription.git
+  docker build -t shareyourv2raysubscription .
+  docker run -d -v /home/ubuntu/syvs/config:/home/app/config -p 8123:8000 shareyourv2raysubscription
+  ```
+  
+## 贡献与反馈
+
+如果你有任何建议或问题，请 [提交 issue](https://github.com/rickylsr/ShareYourV2raySubscription/issues) 或者 [发起 PR](https://github.com/rickylsr/ShareYourV2raySubscription/pulls)。
+
+---
+
+Enjoy!
