@@ -3,6 +3,8 @@
 使用 Flask 构建，基于 Docker 的自托管 V2ray 订阅链接与节点管理器。  
 Self-hosted V2ray subscription system.
 
+![screenshot](/Screenshot.png)
+
 ## 特性
 
 - 轻量级 Flask 后端
@@ -12,7 +14,6 @@ Self-hosted V2ray subscription system.
 ## 环境要求
 
 - Docker（建议 Docker 20.10+）
-- Git
 
 ## 快速开始
 
