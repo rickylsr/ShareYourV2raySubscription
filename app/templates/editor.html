@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>SYVS订阅编辑器</title>
+        <!-- Bootstrap core CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <style>
+            .link-item { 
+                margin-bottom: 10px;
+                cursor: move;
+            }
+        </style>
+        {% if is_newuser %}    
+        <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css"/>
+        {% endif %}
+    </head>
+    <body class="bg-body-tertiary">
+        <div class="container my-5 py-3">
+            <h2>SYVS 订阅编辑器</h2>
+            <p class="text-secondary">此工具支持管理和编辑 VMESS 和 SS 分享链接。您可以轻松添加、修改、排序链接，并生成分组订阅链接。</p>
+            <div class="bg-body rounded-3 shadow-sm p-3 mb-4">
+                <!-- 状态栏 -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-secondary">
+                        <span>当前用户: user</span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                            重置登录密码
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-body rounded-3 shadow-sm p-3 mb-4">
+                <!-- 密钥部分 -->
+                <form action="" method="post" id="accesskeyForm">
+                    <div class="mb-3">
+                        <label for="accesskey" class="form-label">分享密钥</label>
+                        <div class="row">
+                            <div class="col">
+                                <input type="text" class="form-control" id="accesskey" name="accesskey" 
+                                    value="{% if accesskey == '' %}无明文密钥保存{% else %}{{ accesskey }}{% endif %}" 
+                                    {% if accesskey == '' %}readonly disabled{% endif %} placeholder="请输入分享密钥" 
+                                    required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-success" onclick="generatepwd()">生成新密钥</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="emailHelp" class="form-text">密钥以MD5形式保存, 如果忘记可以在本页面重设</div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="yes" name="dontsavekeytf" 
+                            id="savekeytf" {% if accesskey == '' %}checked{% endif %}>
+                        <label class="form-check-label mb-2" for="savekeytf">不明文保存密码</label>
+                        <div class="collapse {% if accesskey == '' %}show{% else %}{% endif %}" id="savekeytfAlert">
+                            <div class="alert alert-warning my-0" role="alert">
+                            选项打开时，密钥将不会明文保存到数据库中，关闭后密钥将以明文形式保存到数据库中。
+                            <br>如果你忘记了密钥，你将无法使用该密钥访问订阅链接。<b>刷新页面后，订阅链接也将不再显示。请谨慎选择。</b>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2" id="savePwd">立即保存</button>
+                </form>
+            </div>
+            <ul class="nav nav-underline mb-3" id="myTab" role="tablist">
+                {% for group in groups %}
+                <li class="nav-item existingGroup" role="presentation">
+                    <button class="nav-link {% if loop.first %}active{% endif %}" id="{{ loop.index }}-tab" data-bs-toggle="tab" data-bs-target="#{{ loop.index }}-tab-pane" type="button" role="tab" aria-controls="{{ loop.index }}-tab-pane" aria-selected="true">{{ group.name }}</button>
+                </li>
+                {% endfor %}
+                <li class="addGroupTabSection d-flex align-items-center" role="presentation">
+                    <button class="btn btn-sm btn-primary icon-link" id="add-group-tab">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                        </svg>
+                        添加分组
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                {% for group in groups %}
+                <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ loop.index }}-tab-pane" role="tabpanel" 
+                    aria-labelledby="{{ loop.index }}-tab" tabindex="0">
+                    <div class="row align-items-center mb-2">
+                        <div class="col">
+                            <label for="{{ loop.index }}-group-name" class="form-label mb-0">分组名</label>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-sm btn-danger remove-group icon-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                </svg>
+                                删除分组</button>
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <input type="text" class="form-control groupNameInput" id="{{ loop.index }}-group-name" placeholder="输入一个分组名称" value="{{ group.name }}">
+                            <div class="invalid-feedback">
+                                    分组名称不能为空且不能与其他组重复。
+                            </div>
+                        </div>
+                    </div>
+                    {% if accesskey != '' %}
+                    <div class="mt-4">
+                    <!-- 分享链接显示 -->
+                        <div class="alert alert-success p-3 py-2">
+                            订阅链接（点击复制）
+                            <p class="mb-1"><code class="text-break bg-body-secondary p-1 rounded user-select-all share-link">
+                                {{ baseurl }}{{ shareurl }}?key={{ accesskey }}&group={{ group.name | urlencode }}
+                            </code></p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <form action="" method="post" class="linksForm mt-3">
+                        <div class="linksContainer">
+                            {% for link in group.links %}
+                            <div class="link-item bg-body rounded-3 shadow-sm p-2">
+                                <div class="row">
+                                    <div class="col-auto pe-0 draggable">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
+                                            <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                                        </svg>
+                                    </div>
+                                    <div class="col">
+                                        <div class="mb-2">
+                                            <label>链接:</label>
+                                            <input type="text" class="form-control link-url" value="{{ link.raw }}">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label>类型:</label>
+                                            <span class="badge bg-secondary">{{ link.type }}</span>
+                                            <label>备注:</label>
+                                            <span class="badge bg-info">{{ link.comment }}</span>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
+                                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
+                                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- 文本模式：多行 textarea，初始隐藏 -->
+                        <div class="linksTextareaContainer" style="display:none;">
+                            <textarea class="form-control linksTextarea" rows="8">{% for link in group.links %}{{ link.raw }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-primary btn-sm icon-link addLinkBtn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-dotted" viewBox="0 0 16 16">
+                                        <path d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0zm2.292 0h-.917v1h.917zm1.833 0h-.917v1h.917zm1.833 0h-.916v1h.916zm1.834 0h-.917v1h.917zm1.833 0h-.917v1h.917zM13.5 0h-.458v1h.458q.151 0 .293.029l.194-.981A2.5 2.5 0 0 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415zM16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zM0 5.708v.917h1v-.917zm16 .917v-.917h-1v.917zM0 7.542v.916h1v-.916zm15 .916h1v-.916h-1zM0 9.375v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .916v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458h-1v.458q0 .151-.029.293l.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                                    </svg>
+                                    添加链接
+                                </button>
+                            </div>
+                            <div class="col-auto ms-auto">
+                                <button type="button" class="btn btn-warning btn-sm icon-link toggleLinksMode">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                                        <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                                    </svg>
+                                    切换到批量导入模式
+                                </button>
+                            </div>
+                        </div>
+                        <!-- 隐藏域保存链接 JSON -->
+                        <input type="hidden" name="links_json_{{ group.name }}" class="linksJson">
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row mt-2" id="saveLinksSection">
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary mt-2" id="saveLinksBtn">保存</button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-secondary mt-2" id="reloadPageBtn">刷新/重置更改</button>
+                </div>
+            </div>
+        </div>
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast">
+        </div>
+        <!-- Reset Password Modal -->
+        <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning-subtle">
+                        <h5 class="modal-title" id="resetPasswordModalLabel">重置页面密码</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <form action="" method="post" class="linksForm mt-3" id="resetPasswordForm">
+                        <p class="text-warning-emphasis">重置登录编辑页面所用的密码。确保足够的复杂度。</p>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">用户名</label>
+                            <input type="text" class="form-control" value="user" disabled readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" placeholder="请输入新密码" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">确定重置</button>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+        <script>
+            var newGroupCount = 0;
+            var hasUnsavedChanges = false;
+            function showToast(type, message) {
+                var toastContainer = document.getElementById('toast');
+                var toastDiv = document.createElement('div');
+                toastDiv.className = `toast align-items-center text-bg-${type} border-0`;
+                toastDiv.setAttribute('role', 'alert');
+                toastDiv.setAttribute('aria-live', 'assertive');
+                toastDiv.setAttribute('aria-atomic', 'true');
+                toastDiv.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                toastContainer.appendChild(toastDiv);
+                var toast = new bootstrap.Toast(toastDiv);
+                toast.show();
+            }
+            
+
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('share-link')) {
+                    var range = document.createRange();
+                    range.selectNodeContents(event.target);
+                    var selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    try {
+                        document.execCommand('copy');
+                        showToast('success', '链接已复制到剪切板');
+                    } catch (err) {
+                        showToast('warning', '复制失败，请手动复制');
+                    }
+                }
+            });
+
+            function generatepwd() {
+                var pasArr = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+                var password = '';
+                for (var i = 0; i < 16; i++){
+                    var x = Math.floor(Math.random()*pasArr.length);
+                    password += pasArr[x];
+                }
+                document.getElementById('accesskey').value = password;
+                document.getElementById('accesskey').removeAttribute('readonly');
+                document.getElementById('accesskey').removeAttribute('disabled');
+
+                showToast('success', '新密钥已生成');
+                document.getElementById('savekeytf').checked = false;
+                var alertDiv = document.getElementById('savekeytfAlert');
+                const bsCollapse = new bootstrap.Collapse('#savekeytfAlert', {
+                    toggle: false
+                })
+                bsCollapse.hide();
+            }
+
+            function createGroupComponent(name, index, show_the_component=false, share_link='') {
+                var newDiv = document.createElement('div');
+                newDiv.className = 'tab-pane fade';
+                newDiv.id = `${index}-tab-pane`;
+                newDiv.setAttribute('role', 'tabpanel');
+                if (show_the_component) {
+                    newDiv.classList.add('show', 'active');
+                }
+                newDiv.setAttribute('aria-labelledby', `${index}-tab`);
+                newDiv.innerHTML = `
+                    <div class="row align-items-center mb-2">
+                        <div class="col">
+                            <label for="${index}-group-name" class="form-label mb-0">分组名</label>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-sm btn-danger remove-group icon-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                                </svg>
+                                删除分组</button>
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col">
+                            <input type="text" class="form-control groupNameInput" id="${index}-group-name" placeholder="输入一个分组名称" value="${name}">
+                            <div class="invalid-feedback">
+                                    分组名称不能为空且不能与其他组重复。
+                            </div>
+                        </div>
+                    </div>
+                    ${ share_link === '' ? ``: `<div class="mt-4">
+                    <!-- 分享链接显示 -->
+                        <div class="alert alert-success p-3 py-2">
+                            订阅链接（点击复制）
+                            <p class="mb-1"><code class="text-break bg-body-secondary p-1 rounded user-select-all share-link">
+                                ${share_link}
+                            </code></p>
+                        </div>
+                    </div>`}
+                    <form action="" method="post" class="linksForm mt-3">
+                        <div class="linksContainer">
+                        </div>
+                        <div class="linksTextareaContainer" style="display:none;">
+                            <textarea class="form-control linksTextarea" rows="8"></textarea>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-primary btn-sm icon-link addLinkBtn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-dotted" viewBox="0 0 16 16">
+                                        <path d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0zm2.292 0h-.917v1h.917zm1.833 0h-.917v1h.917zm1.833 0h-.916v1h.916zm1.834 0h-.917v1h.917zm1.833 0h-.917v1h.917zM13.5 0h-.458v1h.458q.151 0 .293.029l.194-.981A2.5 2.5 0 0 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415zM16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zM0 5.708v.917h1v-.917zm16 .917v-.917h-1v.917zM0 7.542v.916h1v-.916zm15 .916h1v-.916h-1zM0 9.375v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .916v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458h-1v.458q0 .151-.029.293l.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                                    </svg>
+                                    添加链接
+                                </button>
+                            </div>
+                            <div class="col-auto ms-auto">
+                                <button type="button" class="btn btn-warning btn-sm icon-link toggleLinksMode">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                                        <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                                    </svg>
+                                    切换到批量导入模式
+                                </button>
+                            </div>
+                        </div>
+                        <!-- 隐藏域保存链接 JSON -->
+                        <input type="hidden" name="links_json_${name}" class="linksJson">
+                    </form>
+                `;
+                return newDiv;
+            }
+
+            function createLinkComponent(url, type='待解析', comment='待解析') {
+                var newDiv = document.createElement('div');
+                newDiv.className = 'link-item card p-2';
+                newDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-auto pe-0 draggable">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grip-vertical" viewBox="0 0 16 16">
+                                <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0M7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-3 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </div>
+                        <div class="col">
+                            <div class="mb-2">
+                                <label>链接:</label>
+                                <input type="text" class="form-control link-url" value="${url || ''}">
+                            </div>
+                            <div class="mb-2">
+                                <label>类型:</label>
+                                <span class="badge bg-secondary">待解析</span>
+                                <label>备注:</label>
+                                <span class="badge bg-info">待解析</span>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
+                                <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
+                                <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return newDiv;
+            }
+
+            function loadPage() {
+               fetch(window.location.href + 'api/')
+                    .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络错误或服务器异常');
+                    }
+                    return response.json();
+                    })
+                    .then(data => {
+                        // 处理数据并更新页面
+                        if (data.accesskey) {
+                            document.getElementById('accesskey').value = data.accesskey;
+                            document.getElementById('accesskey').removeAttribute('readonly');
+                            document.getElementById('accesskey').removeAttribute('disabled');
+                        } else {
+                            document.getElementById('accesskey').value = '无明文密钥保存';
+                            document.getElementById('accesskey').setAttribute('readonly', true);
+                            document.getElementById('accesskey').setAttribute('disabled', true);
+                        }
+                        if (data.baseurl && data.shareurl && data.groups) {
+                            // 清空并重新生成导航标签
+                            const myTab = document.getElementById('myTab');
+                            // 移除现有分组项（注意选择器根据你实际生成的结构调整）
+                            myTab.querySelectorAll('.nav-item').forEach(item => item.remove());
+
+                            // 遍历 groups 数组，生成 nav 按钮
+                            data.groups.forEach((group, index) => {
+                                const navItem = document.createElement('li');
+                                navItem.className = 'nav-item existingGroup';
+                                navItem.setAttribute('role', 'presentation');
+                                navItem.innerHTML = `
+                                    <button class="nav-link ${index === 0 ? 'active' : ''}" id="${index + 1}-tab" 
+                                    data-bs-toggle="tab" data-bs-target="#${index + 1}-tab-pane" type="button" role="tab" 
+                                    aria-controls="${index + 1}-tab-pane" aria-selected="${index === 0 ? 'true' : 'false'}">
+                                    ${group.name}
+                                    </button>
+                                `;
+                                // 假设 add-group 按钮是 nav 中的最后一个 li，插入到它之前
+                                myTab.insertBefore(navItem, document.getElementById('add-group-tab').parentElement);
+                            });
+
+                            // 清空并重新生成分组内容
+                            const myTabContent = document.getElementById('myTabContent');
+                            myTabContent.innerHTML = ''; // 清空现有内容
+
+                            data.groups.forEach((group, index) => {
+                                share_link = '';
+                                if (data.accesskey) {
+                                    share_link = `${data.baseurl}${data.shareurl}?key=${data.accesskey}&group=${encodeURIComponent(group.name)}`;
+                                }
+                                // 创建新的分组组件
+                                if (index === 0) {
+                                    // 第一个分组默认显示
+                                    
+                                    var newGroupComponent = createGroupComponent(group.name, index + 1, true, share_link );
+                                } else {
+                                    // 其他分组不显示
+                                    var newGroupComponent = createGroupComponent(group.name, index + 1, false, share_link );
+                                }
+
+                                // 获取当前分组内容中用于保存链接列表的容器
+                                const container = newGroupComponent.querySelector('.linksContainer');
+                                if (container) {
+                                    group.links.forEach(link => {
+                                        container.appendChild(createLinkComponent(link.raw, link.type, link.comment));
+                                    });
+                                }
+
+                                // 添加到页面
+                                myTabContent.appendChild(newGroupComponent);
+
+                                // 初始化排序功能
+                                Sortable.create(container, {
+                                    animation: 150,
+                                    handle: '.draggable'
+                                });
+
+                                // 绑定删除分组按钮事件
+                                newGroupComponent.querySelector('.remove-group').addEventListener('click', function() {
+                                    newGroupComponent.remove();
+                                    document.getElementById(`${index + 1}-tab`).parentElement.remove();
+                                });
+
+                                // 绑定切换模式按钮事件
+                                newGroupComponent.querySelector('.toggleLinksMode').addEventListener('click', function() {
+                                    const btn = this;
+                                    const comp = newGroupComponent.querySelector('.linksContainer');
+                                    const text = newGroupComponent.querySelector('.linksTextareaContainer');
+                                    const textarea = newGroupComponent.querySelector('.linksTextarea');
+                                    toggleLinksMode(btn, comp, text, textarea);
+                                });
+
+                                // 绑定添加链接按钮事件
+                                newGroupComponent.querySelector('.addLinkBtn').addEventListener('click', function() {
+                                    const container = newGroupComponent.querySelector('.linksContainer');
+                                    container.appendChild(createLinkComponent());
+                                });
+
+                                // 绑定删除链接按钮事件
+                                newGroupComponent.querySelector('.linksContainer').addEventListener('click', function(e) {
+                                    if (e.target.classList.contains('remove-link')) {
+                                        e.target.closest('.link-item').remove();
+                                    } else if (e.target.classList.contains('move-up')) {
+                                        const item = e.target.closest('.link-item');
+                                        if (item.previousElementSibling)
+                                            item.parentNode.insertBefore(item, item.previousElementSibling);
+                                    } else if (e.target.classList.contains('move-down')) {
+                                        const item = e.target.closest('.link-item');
+                                        if (item.nextElementSibling)
+                                            item.parentNode.insertBefore(item.nextElementSibling, item);
+                                    }
+                                });
+                            });
+                        }
+                    }).catch(error => {
+                        console.error('Error fetching API data:', error);
+                        document.getElementById('loading').textContent = "加载数据失败，请刷新重试。";
+                        });
+            }
+            // 监听保存密钥的复选框
+            document.getElementById('savekeytf').addEventListener('change', function() {
+                var alertDiv = document.getElementById('savekeytfAlert');
+                const bsCollapse = new bootstrap.Collapse('#savekeytfAlert', {
+                    toggle: false
+                })
+                if (this.checked) {
+                    bsCollapse.show();
+                } else {
+                    bsCollapse.hide();
+                }
+            });
+            
+            // 监听新建按钮点击事件
+            document.getElementById('add-group-tab').addEventListener('click', function() {
+                hasUnsavedChanges = true;
+                newGroupCount = newGroupCount + 1;
+                var newIndex = document.querySelectorAll('.nav-item.existingGroup').length + newGroupCount;
+                var newGroupName = '新分组' + '#' + newIndex;
+                // 创建新的分组组件
+                var newGroupComponent = createGroupComponent(newGroupName, newIndex, true);
+
+                // Remove 'show active' class from all other group tab panes
+                document.querySelectorAll('.tab-pane').forEach(function(tabPane) {
+                    tabPane.classList.remove('show', 'active');
+                });
+                document.getElementById('myTabContent').appendChild(newGroupComponent);
+
+                var newNavItem = document.createElement('li');
+                newNavItem.className = 'nav-item newGroup';
+                newNavItem.setAttribute('role', 'presentation');
+                newNavItem.innerHTML = `
+                    <button class="nav-link active" id="${newIndex}-tab" data-bs-toggle="tab" data-bs-target="#${newIndex}-tab-pane" aria-selected="true" type="button" role="tab" aria-controls="${newIndex}-tab-pane" aria-selected="false">${newGroupName}</button>
+                `;
+                // Remove 'active' class from all other nav-link elements
+                document.querySelectorAll('.nav-link').forEach(function(navLink) {
+                    navLink.classList.remove('active');
+                    navLink.setAttribute('aria-selected', 'false');
+                });
+
+                document.getElementById('myTab').insertBefore(newNavItem, this.parentElement);
+
+
+
+                // 初始化新的分组的排序功能
+                var newLinksContainer = newGroupComponent.querySelector('.linksContainer');
+                Sortable.create(newLinksContainer, {
+                    animation: 150,
+                    handle: '.draggable'
+                });
+                // 绑定删除分组按钮事件
+                newGroupComponent.querySelector('.remove-group').addEventListener('click', function() {
+                    hasUnsavedChanges = true;
+                    newGroupComponent.remove();
+                    newNavItem.remove();
+                });
+                // 绑定切换模式按钮事件
+                newGroupComponent.querySelector('.toggleLinksMode').addEventListener('click', function() {
+                    var btn = this;
+                    var comp = newGroupComponent.querySelector('.linksContainer');
+                    var text = newGroupComponent.querySelector('.linksTextareaContainer');
+                    var textarea = newGroupComponent.querySelector('.linksTextarea');
+                    toggleLinksMode(btn, comp, text, textarea);
+                });
+                // 绑定添加链接按钮事件
+                newGroupComponent.querySelector('.addLinkBtn').addEventListener('click', function() {
+                    var container = newGroupComponent.querySelector('.linksContainer');
+                    container.appendChild(createLinkComponent());
+                    hasUnsavedChanges = true;
+                });
+                // 绑定删除链接按钮事件
+                newGroupComponent.querySelector('.linksContainer').addEventListener('click', function(e) {
+                    hasUnsavedChanges = true;
+                    if(e.target.classList.contains('remove-link')) {
+                        e.target.closest('.link-item').remove();
+                    } else if(e.target.classList.contains('move-up')) {
+                        var item = e.target.closest('.link-item');
+                        if(item.previousElementSibling)
+                            item.parentNode.insertBefore(item, item.previousElementSibling);
+                    } else if(e.target.classList.contains('move-down')) {
+                        var item = e.target.closest('.link-item');
+                        if(item.nextElementSibling)
+                            item.parentNode.insertBefore(item.nextElementSibling, item);
+                    }
+                });
+            });
+        
+            // 监听accesskeyForm提交事件，使用fetch异步提交数据
+            document.getElementById('accesskeyForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const form = e.target;
+                // 使用FormData构造请求体
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) {
+                        showToast('warning', '网络错误，保存密钥失败');
+                    }
+                    const data = await response.json();
+                    showToast('success', '新密钥提交成功');
+                    loadPage();
+                } catch (error) {
+                    console.error(error);
+                    showToast('warning', '保存密钥失败');
+                }
+            });
+
+            // 监听分组名输入事件
+            document.querySelectorAll('.groupNameInput').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    this.classList.remove('is-invalid');
+                    this.classList.remove('is-valid');
+                    var groupName = this.value.trim();
+                    // 检查是否与其他组的名字重复
+                    var allGroupNames = Array.from(document.querySelectorAll('.groupNameInput'))
+                        .filter(input => input !== this)
+                        .map(input => input.value.trim());
+                    if (allGroupNames.includes(groupName)) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                        return;
+                    }
+                    if (groupName === '') {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                        return;
+                    }
+                    document.querySelector('.nav-link.active').textContent = groupName;
+                    this.classList.add('is-valid');
+                });
+            });
+
+            // 初始化线路排序
+            document.querySelectorAll('.linksContainer').forEach(function(element) {
+                Sortable.create(element, {
+                    animation: 150,
+                    handle: '.draggable'
+                });
+            });
+            
+            // 删除，上移，下移的按钮事件
+            document.querySelectorAll('.linksContainer').forEach(function(element) {
+                element.addEventListener('click', function(e) {
+                    hasUnsavedChanges = true;
+                    if(e.target.classList.contains('remove-link')) {
+                    e.target.closest('.link-item').remove();
+                    } else if(e.target.classList.contains('move-up')) {
+                    var item = e.target.closest('.link-item');
+                    if(item.previousElementSibling)
+                        item.parentNode.insertBefore(item, item.previousElementSibling);
+                    } else if(e.target.classList.contains('move-down')) {
+                    var item = e.target.closest('.link-item');
+                    if(item.nextElementSibling)
+                        item.parentNode.insertBefore(item.nextElementSibling, item);
+                    }
+                });
+            });
+           
+
+            // 为所有 addLinkBtn 按钮绑定点击事件
+            document.querySelectorAll('.addLinkBtn').forEach(function(btn) {
+                btn.addEventListener('click', function(){
+                    hasUnsavedChanges = true;
+                    // 查找当前按钮前面的第一个具有 class "linksContainer" 的元素
+                    var container = btn.parentElement.parentElement. previousElementSibling;
+                    while(container && !container.classList.contains('linksContainer')) {
+                        container = container.previousElementSibling;
+                    }
+                    if(container) {
+                        container.appendChild(createLinkComponent());
+                    }
+                });
+            });
+            
+            function toggleLinksMode(btn, comp, text, textarea) {
+                if(comp.style.display === 'none'){
+                    hasUnsavedChanges = true;
+                    // 当前是文本模式，切换到组件模式
+                    // 解析 textarea 内容并重建组件列表到 currentLinksContainer 中
+                    var textContent = textarea.value;
+                    var lines = textContent.split(/\r?\n/);
+                    comp.innerHTML = ''; // 清空当前容器
+                    lines.forEach(function(url) {
+                        url = url.trim();
+                        if(url) {
+                            comp.appendChild(createLinkComponent(url));
+                        }
+                    });
+                    comp.style.display = 'block';
+                    text.style.display = 'none';
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                            <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                        </svg>
+                        切换到批量导入模式
+                    `;
+                } else {
+                    // 切换到文本模式，从组件中拼接文本
+                    var items = comp.querySelectorAll('.link-item .link-url');
+                    var arr = [];
+                    items.forEach(function(item) {
+                        var url = item.value.trim();
+                        if(url) { arr.push(url); }
+                    });
+                    textarea.value = arr.join("\n\n");
+                    comp.style.display = 'none';
+                    text.style.display = 'block';
+                    btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
+                        <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
+                    </svg>
+                    切换到组件模式`;
+                }
+            }
+
+            // 切换模式：组件 <--> 多行文本
+            document.querySelectorAll('.toggleLinksMode').forEach(function(btn) {
+                btn.addEventListener('click', function(){
+                    var comp = this.parentElement.parentElement.parentElement.querySelector('.linksContainer');
+                    var text = this.parentElement.parentElement.parentElement.querySelector('.linksTextareaContainer');
+                    var textarea = text.querySelector('.linksTextarea');
+                    toggleLinksMode(btn, comp, text, textarea);
+                });
+            });
+            
+
+            // 监听删除分组按钮点击事件
+            document.querySelectorAll('.remove-group').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    hasUnsavedChanges = true;
+                    var groupComponent = this.closest('.tab-pane');
+                    groupComponent.remove();
+                    var groupId = groupComponent.id.split('-')[0];
+                    document.getElementById(`${groupId}-tab`).parentElement.remove();
+                });
+            });
+
+            // 提交前将所有页面内容转换为 JSON 并发送到后端
+                document.getElementById('saveLinksBtn').addEventListener('click', async function(e) {
+                    var groupsData = [];
+                    document.querySelectorAll('.tab-pane').forEach(function(tabPane) {
+                        var groupNameInput = tabPane.querySelector('.groupNameInput');
+                        if (groupNameInput) {
+                            var groupName = groupNameInput.value.trim();
+                            var links = [];
+                            tabPane.querySelectorAll('.link-item').forEach(function(item) {
+                                var url = item.querySelector('.link-url').value.trim();
+                                if (url) {
+                                    links.push({ raw: url,});
+                                }
+                            });
+                            groupsData.push({ name: groupName, links: links });
+                        }
+                    });
+
+                    try {
+                        const response = await fetch(window.location.href, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({groups: groupsData})
+                        });
+
+                        if (!response.ok) {
+                            showToast('warning', '网络错误，保存分组失败');
+                        } else {
+                            const data = await response.json();
+                            showToast('success', '分组保存成功');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        showToast('warning', '保存分组失败');
+                    }
+                });
+
+                document.getElementById('reloadPageBtn').addEventListener('click', function() {
+                    loadPage();
+                    showToast('info', '页面已刷新');
+                });
+
+                // 提示用户在页面中有未保存更改时离开页面
+                window.addEventListener('beforeunload', function (e) {
+                    if (hasUnsavedChanges) {
+                        e.preventDefault();
+                        e.returnValue = '您有未保存的更改，确定要离开此页面吗？';
+                    }
+                });
+
+                // 监听所有 input 元素的更改事件
+                document.querySelectorAll('input, textarea').forEach(function (input) {
+                    input.addEventListener('input', function () {
+                        hasUnsavedChanges = true;
+                    });
+                });
+                
+
+                async function submitResetPasswordForm(form) {
+                    const formData = new FormData(form);
+                    try {
+                        const response = await fetch( window.location.href + 'user/', {
+                            method: 'POST', 
+                            body: formData
+                        });
+                        if (!response.ok) {
+                            throw new Error('网络错误或服务器异常');
+                        }
+                        const data = await response.json();
+                        if (data.success) {
+                            showToast('success', '密码重设成功');
+                        } else {
+                            showToast('warning', '密码重设失败');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('warning', '密码重设失败');
+                    }
+                }
+
+                document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitResetPasswordForm(e.target);
+                });
+          </script>
+        
+        {% if is_newuser %}   
+        <script>
+            // 显示新用户提示
+            document.addEventListener('DOMContentLoaded', function() {
+
+            const driverObj = window.driver.js.driver({
+                showProgress: true,
+                allowClose: false,
+                steps: [
+                {
+                    popover: {
+                        title: '欢迎',
+                        description: '欢迎使用公共订阅编辑器(SYVS)！我们将引导您完成初始设置。'
+                    }
+                },
+                {
+                    element: '#resetPasswordModal .modal-content',
+                    popover: {
+                        title: '重设页面密码',
+                        description: '为了保证安全，请重新设置页面登录密码',
+                        position: 'bottom'
+                    },
+                     onHighlightStarted: () => {
+                        // 触发生成密钥的函数
+                        var resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+                        resetModal.show();
+                    },
+                    onDeselected : () => {
+                        document.querySelector('#resetPasswordModal .btn-close').click();;
+                    }
+
+                },
+                {
+                    element: '.btn-success[onclick="generatepwd()"]',
+                    popover: {
+                        title: '生成密钥',
+                        description: '点击此按钮（或者直接点击下一步）生成一个新的分享密钥。',
+                        position: 'bottom'
+                    },
+                     onHighlighted: () => {
+                        // 触发生成密钥的函数
+                        generatepwd();
+                    }
+
+                },
+                {
+                    element: '#accesskey',
+                    popover: {
+                        title: '新的密钥',
+                        description: '我们已经为您生成了新的密钥，您可以在此处查看。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    element: '#savePwd',
+                    popover: {
+                        title: '保存分组',
+                        description: '完成编辑后，点击此按钮保存您的分组和链接。（或者直接点击下一步，我们将帮助您保存）',
+                        position: 'bottom'
+                    },
+                     onDeselected: () => {
+                        // 触发生成密钥的函数
+                        document.getElementById('savePwd').click();
+                    }
+                },
+                {
+                    element: '#myTab',
+                    popover: {
+                        title: '分组列表',
+                        description: '这是您的分组列表，您可以在这里添加、删除和编辑分组。我们支持尽可能多的分组。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    element: '#myTabContent',
+                    popover: {
+                        title: '分组内容',
+                        description: '这是当前选中分组的内容，您可以在这里添加、删除和编辑链接。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    element: '.alert-success',
+                    popover: {
+                        title: '订阅分享链接',
+                        description: '点击复制订阅分享链接(Subscription)。注意，当您更改分组名称并保存时，链接也会随之更改。单击链接可以复制到剪贴板。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    element: '.toggleLinksMode',
+                    popover: {
+                        title: '切换模式',
+                        description: '点击此按钮切换到批量导入模式，您可以一次性从代理工具中导出并粘贴多个Vmess, Vless链接。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    element: '#saveLinksSection',
+                    popover: {
+                        title: '保存更改和刷新页面',
+                        description: '如果做出了更改，别忘了点击此按钮保存您的分组和链接。在保存更改之前，可以重新加载数据。',
+                        position: 'bottom'
+                    }
+                },
+                {
+                    popover: {
+                        title: '大功告成',
+                        description: '您已经完成了初始设置！现在可以开始使用公共订阅编辑器(SYVS)了！',
+                        position: 'bottom'
+                    }
+                }
+                ]
+            });
+            driverObj.drive();
+            });
+        </script>
+        {% endif %}
+    </body>
+</html>

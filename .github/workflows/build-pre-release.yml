@@ -1,0 +1,72 @@
+name: Build pre-release Docker image
+
+# 当 push 的 tag 符合 prerelease-* 格式时触发该工作流
+on:
+  push:
+    tags:
+      - 'prerelease-*'
+
+env:
+  # 使用 GitHub Container Registry（也可根据需要修改为 docker.io 等）
+  REGISTRY: ghcr.io
+  # 使用 github.repository 格式为 <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}-prerelease
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # 用于与 sigstore/fulcio 完成身份质询（非 PR 时需要）
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 安装 cosign 工具，用于对镜像进行签名
+      - name: Install cosign
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20
+        with:
+          cosign-release: 'v2.2.4'
+
+      # 设置 Buildx 构建器，支持多平台构建和缓存
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226
+
+      # 登录到 Docker Registry
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 提取 Docker 镜像元数据（如标签、版本等）
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # 构建并推送 Docker 镜像，同时对 pre-release 镜像打上 prerelease tag
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 使用 cosign 签名构建镜像（仅在非 PR 时执行）
+      - name: Sign the published Docker image
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
