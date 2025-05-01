@@ -16,16 +16,13 @@ Self-hosted V2ray subscription system.
 
 ## 快速开始
 
-### 1. 手动构建 Docker 镜像并运行
+### 1. 拉取 Docker 镜像并运行
 
 ```shell
-git pull https://github.com/rickylsr/ShareYourV2raySubscription.git
-cd ShareYourV2raySubscription
-docker build -t shareyourv2raysubscription .
-docker run -d -p 8123:8000 shareyourv2raysubscription
+docker run -d -p 8123:8000 ghcr.io/rickylsr/shareyourv2raysubscription
 ```
 
-完成后，你可通过 http://<server_ip>:8123 访问订阅管理系统。
+完成后，你可通过 http://<server_ip>:8123/editor 访问订阅管理系统。
 
 ### 2. 数据持久化部署
 
@@ -34,20 +31,21 @@ docker run -d -p 8123:8000 shareyourv2raysubscription
 假设你在主机上创建了 `/home/ubuntu/syvs/config` 目录，运行以下命令：
 
 ```shell
-docker build -t shareyourv2raysubscription .
 docker run -d \
-  -v /home/ubuntu/syvs/config:/home/app/config \
+  -v /home/ubuntu/syvs/config:/home/app/data \
   -p 8123:8000 \
-  shareyourv2raysubscription
+  ghcr.io/rickylsr/shareyourv2raysubscription
 ```
 
-容器内的数据将保存在 `/home/app/config/data.json`，同时映射到主机的 `/home/ubuntu/syvs/config`，这样即使容器被删除，数据也能保留。
+容器内的数据将保存在 `/home/app/data/data.json`，同时映射到主机的 `/home/ubuntu/syvs/config`，这样即使容器被删除，数据也能保留。
 
 ## 说明
 
 - **访问端口**：默认映射容器的 8000 端口到主机的 8123 端口，可根据需要调整 `-p` 参数。  
 - **持久化存储**：建议使用数据挂载方式确保数据安全。  
 - **重置设置**：如果需要重置订阅设置，只需清空挂载目录中的数据文件。
+- **安全问题**: editor页面使用了HTTP Basic Auth，用户名固定为`user`，如果没有特别设置，默认密码为`password`。您可以通过在`docker run`时设置环境变量`DEFAULT_PASSWORD`以使用不同的密码。密码存储在容器的`/home/app/data/user.json`可以随时通过删除重置。
+- **高级设置**：可以通过设置docker容器环境变量`SHAREURL` （默认为：`subscription/`）自定义分享链接的前缀
 
 ## 维护与更新
 
