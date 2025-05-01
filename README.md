@@ -44,7 +44,7 @@ docker run -d \
 - **访问端口**：默认映射容器的 8000 端口到主机的 8123 端口，可根据需要调整 `-p` 参数。  
 - **持久化存储**：建议使用数据挂载方式确保数据安全。  
 - **重置设置**：如果需要重置订阅设置，只需清空挂载目录中的数据文件。
-- **安全问题**: editor页面使用了HTTP Basic Auth，用户名固定为`user`，如果没有特别设置，默认密码为`password`。您可以通过在`docker run`时设置环境变量`DEFAULT_PASSWORD`以使用不同的密码。密码存储在容器的`/home/app/data/user.json`可以随时通过删除重置。
+- **安全问题**: editor页面使用了HTTP Basic Auth，用户名固定为`user`，如果没有特别设置，默认密码为`password`。您可以通过在`docker run`时设置环境变量`DEFAULT_PASSWORD`以使用不同的密码。密码存储在容器的`/home/app/data/users.json`可以随时通过删除重置。
 - **高级设置**：可以通过设置docker容器环境变量`SHAREURL` （默认为：`subscription/`）自定义分享链接的前缀
 
 ## 维护与更新
