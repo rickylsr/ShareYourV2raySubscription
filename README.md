@@ -3,6 +3,8 @@
 使用 Flask 构建，基于 Docker 的自托管 V2ray 订阅链接与节点管理器。  
 Self-hosted V2ray subscription system.
 
+![screenshot](/Screenshot.png)
+
 ## 特性
 
 - 轻量级 Flask 后端
@@ -12,14 +14,13 @@ Self-hosted V2ray subscription system.
 ## 环境要求
 
 - Docker（建议 Docker 20.10+）
-- Git
 
 ## 快速开始
 
 ### 1. 拉取 Docker 镜像并运行
 
 ```shell
-docker run -d -p 8123:8000 ghcr.io/rickylsr/shareyourv2raysubscription
+docker run -d -p 8123:8000 ghcr.io/rickylsr/shareyourv2raysubscription:latest
 ```
 
 完成后，你可通过 http://<server_ip>:8123/editor 访问订阅管理系统。
@@ -49,12 +50,11 @@ docker run -d \
 
 ## 维护与更新
 
-- 拉取最新代码后，重新构建镜像即可更新系统：  
+- 拉取最新镜像 
   ```shell
-  git pull https://github.com/rickylsr/ShareYourV2raySubscription.git
-  docker build -t shareyourv2raysubscription .
-  docker run -d -v /home/ubuntu/syvs/config:/home/app/config -p 8123:8000 shareyourv2raysubscription
+  docker pull ghcr.io/rickylsr/shareyourv2raysubscription:latest
   ```
+- 删除当前容器后，重新按照步骤1（或者2）运行容器即可 
   
 ## 贡献与反馈
 
