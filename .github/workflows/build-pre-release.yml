@@ -8,9 +8,9 @@ on:
 
 env:
   # 使用 GitHub Container Registry（也可根据需要修改为 docker.io 等）
-  REGISTRY: ghcr.io
-  # 使用 github.repository 格式为 <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}-prerelease
+    REGISTRY: ghcr.io
+    # 使用 github.repository 格式为 <account>/<repo>
+    IMAGE_NAME: ${{ github.repository | tr 'A-Z' 'a-z' }}-prerelease
 
 jobs:
   build:
