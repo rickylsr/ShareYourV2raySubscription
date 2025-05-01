@@ -24,7 +24,7 @@ DEFAULT_PASSWORD = os.environ.get('DEFAULT_PASSWORD', 'password')
 
 def load_users():
     # 从文件加载用户信息
-    if os.path.exists('users.json'):
+    if os.path.exists(STORE_USER):
         with open(STORE_USER, 'r') as f:
             data = json.load(f)
             data.setdefault('user', generate_password_hash(DEFAULT_PASSWORD))
