@@ -13,7 +13,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository | tr 'A-Z' 'a-z' }}
+  IMAGE_NAME: ${{ toLower(github.repository) }}
 
 
 jobs:
