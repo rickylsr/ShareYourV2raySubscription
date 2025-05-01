@@ -10,7 +10,7 @@ env:
   # 使用 GitHub Container Registry（也可根据需要修改为 docker.io 等）
     REGISTRY: ghcr.io
     # 使用 github.repository 格式为 <account>/<repo>
-    IMAGE_NAME: shareyourv2raysubscription-prerelease
+    IMAGE_NAME: rickylsr/shareyourv2raysubscription-prerelease
 
 jobs:
   build:
