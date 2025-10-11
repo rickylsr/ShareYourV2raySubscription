@@ -5,7 +5,6 @@ WORKDIR /home/app
 
 RUN apt-get update && \
     apt-get install -y build-essential gcc && \
-    pip install --no-cache-dir -r requirements.txt && \
-    mkdir data
+    pip install --no-cache-dir -r requirements.txt
 
 CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0", "wsgi:app"]
