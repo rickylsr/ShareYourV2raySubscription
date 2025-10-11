@@ -10,6 +10,8 @@ Self-hosted V2ray subscription system.
 - 轻量级 Flask 后端
 - Docker 部署，轻松自托管
 - 支持多组订阅链接管理
+- 几乎支持所有的协议（v2ray, shadowsocks等）
+  - 订阅链接本质是将多个不同的代理协议的链接以base64编码提供给客户端。即使本工具无法识别链接的别名或者协议种类，也不影响实际使用。
 
 ## 环境要求
 

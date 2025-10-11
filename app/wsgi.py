@@ -99,7 +99,14 @@ def process_share_link(url_list):
                 obj = json.loads(decoded)
                 entry["comment"] = obj.get("ps", "")
             except Exception:
-                entry["comment"] = "Invalid vmess"
+                entry["comment"] = "Invalid vmess link"
+        elif raw.startswith("vless://"):
+            entry["type"] = "vless"
+            try:
+                parts = raw.rsplit('#', 1)
+                entry["comment"] = unquote(parts[1]) if len(parts) == 2 else ""
+            except Exception:
+                entry["comment"] = "Invalid vless link"
         elif raw.startswith("ss://"):
             entry["type"] = "ss"
             parts = raw.rsplit('#', 1)
