@@ -14,8 +14,12 @@ function run(command) {
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status || 1);
 }
+const dryRun = args.some(arg => arg === '--dry-run' || arg.startsWith('--dry-run='));
+console.log(dryRun
+  ? '检查部署包，不会上传。 / Checking deployment bundle; no upload.'
+  : '正在上传 Worker。 / Uploading Worker.');
 run(['deploy', ...args]);
-if (!args.some(arg => arg === '--dry-run' || arg.startsWith('--dry-run='))) {
+if (!dryRun) {
   const common = [];
   const shared = new Set(['--config', '-c', '--env', '-e', '--profile', '--cwd', '--env-file']);
   for (let index = 0; index < args.length; index++) {
@@ -23,5 +27,7 @@ if (!args.some(arg => arg === '--dry-run' || arg.startsWith('--dry-run='))) {
     else if ([...shared].some(flag => args[index].startsWith(flag + '='))) common.push(args[index]);
   }
   // Infrastructure setup is outside the HTTP CPU budget and never deletes data.
+  console.log('正在初始化 D1 设置表，保留已有数据。 / Initializing D1 settings; existing data is preserved.');
   run(['d1', 'execute', 'DB', '--remote', '--command', readFileSync(schema, 'utf8'), '--yes', ...common]);
+  console.log('部署完成。请打开 /editor/，用户名为 user。 / Deployment complete. Open /editor/ with username user.');
 }

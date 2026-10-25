@@ -1,4 +1,6 @@
-# Set a unique administrator password during deployment or in .dev.vars locally.
+# 首次登录密码，用户名 user；请使用独立强密码。升级时保留当前值。
+# Initial login password for user; use a unique strong password. Keep it on updates.
 DEFAULT_PASSWORD=
-# Independent key: generate with `openssl rand -hex 32`. Keep this stable and private.
+# 使用 openssl rand -hex 32 生成独立随机密钥；升级或切换模式时保持不变并妥善保管。
+# Generate an independent key with openssl rand -hex 32; keep it stable and private.
 AUTH_SECRET=

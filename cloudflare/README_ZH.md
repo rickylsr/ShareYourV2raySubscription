@@ -10,6 +10,8 @@ Docker 版本使用相同 JavaScript 核心与 JSON 适配层，保留 `data.jso
 
 按钮使用 `v3.1-dev` 开发分支。
 
+部署字段说明和项目提供的部署进度提示均为中英双语。Cloudflare 自带的界面标签与 Wrangler 诊断信息遵循其自身语言设置。
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/rickylsr/ShareYourV2raySubscription/tree/v3.1-dev)
 
 1. 登录 Cloudflare，按提示关联 GitHub/GitLab 账户。

@@ -8,6 +8,8 @@ This target runs a JavaScript Worker with D1 storage. It renders the existing ed
 
 The button uses the `v3.1-dev` development branch.
 
+Deployment field descriptions and project-owned progress messages include Chinese and English. Cloudflare dashboard labels and Wrangler diagnostics follow Cloudflare’s own language settings.
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/rickylsr/ShareYourV2raySubscription/tree/v3.1-dev)
 
 1. Sign in to Cloudflare and connect GitHub/GitLab as requested.
