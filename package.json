@@ -1,0 +1,27 @@
+{
+  "name": "share-your-v2ray-subscription",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "npm ci --prefix cloudflare",
+    "build": "node cloudflare/build.mjs",
+    "deploy": "node cloudflare/deploy.mjs",
+    "check": "node cloudflare/local.mjs check",
+    "test": "node cloudflare/test/all.test.js",
+    "dev": "node cloudflare/local.mjs dev",
+    "db:local": "node cloudflare/local.mjs db"
+  },
+  "cloudflare": {
+    "bindings": {
+      "WORKERS_MODE": {
+        "description": "Application capacity policy: `free` (default) or `paid` (larger limits, for an account with Workers Paid enabled). This does not change your Cloudflare billing plan."
+      },
+      "DEFAULT_PASSWORD": {
+        "description": "Initial administrator password. Keep your existing value when updating."
+      },
+      "AUTH_SECRET": {
+        "description": "Independent 256-bit key: generate 64 random hexadecimal characters with `openssl rand -hex 32`. Keep the same key when switching modes or updating."
+      }
+    }
+  }
+}

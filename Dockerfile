@@ -1,8 +1,19 @@
-FROM python:3.13-slim
+FROM node:24-alpine AS build
+WORKDIR /build
+COPY cloudflare/package.json cloudflare/package-lock.json ./cloudflare/
+RUN npm ci --prefix cloudflare --ignore-scripts
+COPY app/templates ./app/templates
+COPY app/translations ./app/translations
+COPY shared ./shared
+COPY cloudflare/build.mjs ./cloudflare/build.mjs
+RUN node cloudflare/build.mjs
 
-COPY /app /home/app
+FROM node:24-alpine
+ENV NODE_ENV=production
 WORKDIR /home/app
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0", "wsgi:app"]
+COPY shared ./shared
+COPY docker ./docker
+COPY --from=build /build/docker/generated ./docker/generated
+RUN mkdir -p /home/app/data
+EXPOSE 8000
+CMD ["node", "docker/server.js"]

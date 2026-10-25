@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language_options[language].html_lang }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>SYVS订阅编辑器</title>
+        <title>{{ _('page_title') }}</title>
         <!-- Bootstrap core CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
         <style>
@@ -19,17 +19,25 @@
     </head>
     <body class="bg-body-tertiary">
         <div class="container my-5 py-3">
-            <h2>SYVS 订阅编辑器</h2>
-            <p class="text-secondary">此工具支持管理和编辑 VMESS 和 SS 分享链接。您可以轻松添加、修改、排序链接，并生成分组订阅链接。</p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h2>{{ _('heading') }}</h2>
+                <div class="btn-group btn-group-sm" role="group" aria-label="{{ _('language') }}">
+                    {% for code, option in language_options.items() %}
+                    <a class="btn btn-outline-secondary {% if code == language %}active{% endif %}"
+                       href="?lang={{ code }}" hreflang="{{ option.html_lang }}">{{ option.label }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="text-secondary">{{ _('description') }}</p>
             <div class="bg-body rounded-3 shadow-sm p-3 mb-4">
                 <!-- 状态栏 -->
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="text-secondary">
-                        <span>当前用户: user</span>
+                        <span>{{ _('current_user') }}</span>
                     </div>
                     <div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
-                            重置登录密码
+                            {{ _('reset_login_password') }}
                         </button>
                     </div>
                 </div>
@@ -38,32 +46,32 @@
                 <!-- 密钥部分 -->
                 <form action="" method="post" id="accesskeyForm">
                     <div class="mb-3">
-                        <label for="accesskey" class="form-label">分享密钥</label>
+                        <label for="accesskey" class="form-label">{{ _('share_key') }}</label>
                         <div class="row">
                             <div class="col">
                                 <input type="text" class="form-control" id="accesskey" name="accesskey" 
-                                    value="{% if accesskey == '' %}无明文密钥保存{% else %}{{ accesskey }}{% endif %}" 
-                                    {% if accesskey == '' %}readonly disabled{% endif %} placeholder="请输入分享密钥" 
+                                    value="{% if accesskey == '' %}{{ _('no_plaintext_key') }}{% else %}{{ accesskey }}{% endif %}"
+                                    {% if accesskey == '' %}readonly disabled{% endif %} placeholder="{{ _('enter_share_key') }}"
                                     required>
                             </div>
                             <div class="col-auto">
-                                <button type="button" class="btn btn-success" onclick="generatepwd()">生成新密钥</button>
+                                <button type="button" class="btn btn-success" onclick="generatepwd()">{{ _('generate_new_key') }}</button>
                             </div>
                         </div>
                     </div>
-                    <div id="emailHelp" class="form-text">密钥以MD5形式保存, 如果忘记可以在本页面重设</div>
+                    <div id="emailHelp" class="form-text">{{ _('key_help') }}</div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" value="yes" name="dontsavekeytf" 
                             id="savekeytf" {% if accesskey == '' %}checked{% endif %}>
-                        <label class="form-check-label mb-2" for="savekeytf">不明文保存密码</label>
+                        <label class="form-check-label mb-2" for="savekeytf">{{ _('dont_save_plaintext') }}</label>
                         <div class="collapse {% if accesskey == '' %}show{% else %}{% endif %}" id="savekeytfAlert">
                             <div class="alert alert-warning my-0" role="alert">
-                            选项打开时，密钥将不会明文保存到数据库中，关闭后密钥将以明文形式保存到数据库中。
-                            <br>如果你忘记了密钥，你将无法使用该密钥访问订阅链接。<b>刷新页面后，订阅链接也将不再显示。请谨慎选择。</b>
+                            {{ _('key_warning') }}
+                            <br><b>{{ _('key_warning_lost') }}</b>
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-2" id="savePwd">立即保存</button>
+                    <button type="submit" class="btn btn-primary mt-2" id="savePwd">{{ _('save_now') }}</button>
                 </form>
             </div>
             <ul class="nav nav-underline mb-3" id="myTab" role="tablist">
@@ -78,7 +86,7 @@
                             <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
                             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                         </svg>
-                        添加分组
+                        {{ _('add_group') }}
                     </button>
                 </li>
             </ul>
@@ -88,7 +96,7 @@
                     aria-labelledby="{{ loop.index }}-tab" tabindex="0">
                     <div class="row align-items-center mb-2">
                         <div class="col">
-                            <label for="{{ loop.index }}-group-name" class="form-label mb-0">分组名</label>
+                            <label for="{{ loop.index }}-group-name" class="form-label mb-0">{{ _('group_name') }}</label>
                         </div>
                         <div class="col-auto ms-auto">
                             <button type="button" class="btn btn-sm btn-danger remove-group icon-link">
@@ -96,14 +104,14 @@
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                                 </svg>
-                                删除分组</button>
+                                {{ _('delete_group') }}</button>
                         </div>
                     </div>
                     <div class="row mb-3 align-items-center">
                         <div class="col">
-                            <input type="text" class="form-control groupNameInput" id="{{ loop.index }}-group-name" placeholder="输入一个分组名称" value="{{ group.name }}">
+                            <input type="text" class="form-control groupNameInput" id="{{ loop.index }}-group-name" placeholder="{{ _('group_placeholder') }}" value="{{ group.name }}">
                             <div class="invalid-feedback">
-                                    分组名称不能为空且不能与其他组重复。
+                                    {{ _('group_invalid') }}
                             </div>
                         </div>
                     </div>
@@ -111,7 +119,7 @@
                     <div class="mt-4">
                     <!-- 分享链接显示 -->
                         <div class="alert alert-success p-3 py-2">
-                            订阅链接（点击复制）
+                            {{ _('subscription_link') }}
                             <p class="mb-1"><code class="text-break bg-body-secondary p-1 rounded user-select-all share-link">
                                 {{ baseurl }}{{ shareurl }}?key={{ accesskey }}&group={{ group.name | urlencode }}
                             </code></p>
@@ -130,19 +138,19 @@
                                     </div>
                                     <div class="col">
                                         <div class="mb-2">
-                                            <label>链接:</label>
+                                            <label>{{ _('link') }}</label>
                                             <input type="text" class="form-control link-url" value="{{ link.raw }}">
                                         </div>
                                         <div class="mb-2">
-                                            <label>类型:</label>
+                                            <label>{{ _('type') }}</label>
                                             <span class="badge bg-secondary">{{ link.type }}</span>
-                                            <label>备注:</label>
+                                            <label>{{ _('note') }}</label>
                                             <span class="badge bg-info">{{ link.comment }}</span>
                                         </div>
                                         <div>
-                                            <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                                            <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                                            <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                                            <button type="button" class="btn btn-secondary btn-sm move-up">{{ _('move_up') }}</button>
+                                            <button type="button" class="btn btn-secondary btn-sm move-down">{{ _('move_down') }}</button>
+                                            <button type="button" class="btn btn-danger btn-sm remove-link">{{ _('delete') }}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -159,7 +167,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-dotted" viewBox="0 0 16 16">
                                         <path d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0zm2.292 0h-.917v1h.917zm1.833 0h-.917v1h.917zm1.833 0h-.916v1h.916zm1.834 0h-.917v1h.917zm1.833 0h-.917v1h.917zM13.5 0h-.458v1h.458q.151 0 .293.029l.194-.981A2.5 2.5 0 0 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415zM16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zM0 5.708v.917h1v-.917zm16 .917v-.917h-1v.917zM0 7.542v.916h1v-.916zm15 .916h1v-.916h-1zM0 9.375v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .916v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458h-1v.458q0 .151-.029.293l.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
                                     </svg>
-                                    添加链接
+                                    {{ _('add_link') }}
                                 </button>
                             </div>
                             <div class="col-auto ms-auto">
@@ -167,7 +175,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
                                         <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
                                     </svg>
-                                    切换到批量导入模式
+                                    {{ _('switch_bulk') }}
                                 </button>
                             </div>
                         </div>
@@ -179,10 +187,10 @@
             </div>
             <div class="row mt-2" id="saveLinksSection">
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary mt-2" id="saveLinksBtn">保存</button>
+                    <button type="button" class="btn btn-primary mt-2" id="saveLinksBtn">{{ _('save') }}</button>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-secondary mt-2" id="reloadPageBtn">刷新/重置更改</button>
+                    <button type="button" class="btn btn-secondary mt-2" id="reloadPageBtn">{{ _('reload_changes') }}</button>
                 </div>
             </div>
         </div>
@@ -193,24 +201,24 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header bg-warning-subtle">
-                        <h5 class="modal-title" id="resetPasswordModalLabel">重置页面密码</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title" id="resetPasswordModalLabel">{{ _('reset_page_password') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('close') }}"></button>
                     </div>
                     <div class="modal-body">
                     <form action="" method="post" class="linksForm mt-3" id="resetPasswordForm">
-                        <p class="text-warning-emphasis">重置登录编辑页面所用的密码。确保足够的复杂度。</p>
+                        <p class="text-warning-emphasis">{{ _('reset_password_description') }}</p>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label">用户名</label>
+                            <label for="newPassword" class="form-label">{{ _('username') }}</label>
                             <input type="text" class="form-control" value="user" disabled readonly>
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label">新密码</label>
-                            <input type="password" class="form-control" id="newPassword" name="new_password" placeholder="请输入新密码" required>
+                            <label for="newPassword" class="form-label">{{ _('new_password') }}</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" placeholder="{{ _('new_password_placeholder') }}" required>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="submit" class="btn btn-primary">确定重置</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ _('confirm_reset') }}</button>
                     </div>
                     </form>
                 </div>
@@ -219,6 +227,11 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
         <script>
+            const I18N = {{ translations | tojson }};
+            function t(key) {
+                return I18N[key] || key;
+            }
+
             var newGroupCount = 0;
             var hasUnsavedChanges = false;
             function showToast(type, message) {
@@ -233,7 +246,7 @@
                         <div class="toast-body">
                             ${message}
                         </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="${t('close')}"></button>
                     </div>
                 `;
                 toastContainer.appendChild(toastDiv);
@@ -251,9 +264,9 @@
                     selection.addRange(range);
                     try {
                         document.execCommand('copy');
-                        showToast('success', '链接已复制到剪切板');
+                        showToast('success', t('copied'));
                     } catch (err) {
-                        showToast('warning', '复制失败，请手动复制');
+                        showToast('warning', t('copy_failed'));
                     }
                 }
             });
@@ -269,7 +282,7 @@
                 document.getElementById('accesskey').removeAttribute('readonly');
                 document.getElementById('accesskey').removeAttribute('disabled');
 
-                showToast('success', '新密钥已生成');
+                showToast('success', t('new_key_generated'));
                 document.getElementById('savekeytf').checked = false;
                 var alertDiv = document.getElementById('savekeytfAlert');
                 const bsCollapse = new bootstrap.Collapse('#savekeytfAlert', {
@@ -290,7 +303,7 @@
                 newDiv.innerHTML = `
                     <div class="row align-items-center mb-2">
                         <div class="col">
-                            <label for="${index}-group-name" class="form-label mb-0">分组名</label>
+                            <label for="${index}-group-name" class="form-label mb-0">${t('group_name')}</label>
                         </div>
                         <div class="col-auto ms-auto">
                             <button type="button" class="btn btn-sm btn-danger remove-group icon-link">
@@ -298,21 +311,21 @@
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                                 </svg>
-                                删除分组</button>
+                                ${t('delete_group')}</button>
                         </div>
                     </div>
                     <div class="row mb-3 align-items-center">
                         <div class="col">
-                            <input type="text" class="form-control groupNameInput" id="${index}-group-name" placeholder="输入一个分组名称" value="${name}">
+                            <input type="text" class="form-control groupNameInput" id="${index}-group-name" placeholder="${t('group_placeholder')}" value="${name}">
                             <div class="invalid-feedback">
-                                    分组名称不能为空且不能与其他组重复。
+                                    ${t('group_invalid')}
                             </div>
                         </div>
                     </div>
                     ${ share_link === '' ? ``: `<div class="mt-4">
                     <!-- 分享链接显示 -->
                         <div class="alert alert-success p-3 py-2">
-                            订阅链接（点击复制）
+                            ${t('subscription_link')}
                             <p class="mb-1"><code class="text-break bg-body-secondary p-1 rounded user-select-all share-link">
                                 ${share_link}
                             </code></p>
@@ -330,7 +343,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-square-dotted" viewBox="0 0 16 16">
                                         <path d="M2.5 0q-.25 0-.487.048l.194.98A1.5 1.5 0 0 1 2.5 1h.458V0zm2.292 0h-.917v1h.917zm1.833 0h-.917v1h.917zm1.833 0h-.916v1h.916zm1.834 0h-.917v1h.917zm1.833 0h-.917v1h.917zM13.5 0h-.458v1h.458q.151 0 .293.029l.194-.981A2.5 2.5 0 0 0 13.5 0m2.079 1.11a2.5 2.5 0 0 0-.69-.689l-.556.831q.248.167.415.415l.83-.556zM1.11.421a2.5 2.5 0 0 0-.689.69l.831.556c.11-.164.251-.305.415-.415zM16 2.5q0-.25-.048-.487l-.98.194q.027.141.028.293v.458h1zM.048 2.013A2.5 2.5 0 0 0 0 2.5v.458h1V2.5q0-.151.029-.293zM0 3.875v.917h1v-.917zm16 .917v-.917h-1v.917zM0 5.708v.917h1v-.917zm16 .917v-.917h-1v.917zM0 7.542v.916h1v-.916zm15 .916h1v-.916h-1zM0 9.375v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .916v.917h1v-.917zm16 .917v-.917h-1v.917zm-16 .917v.458q0 .25.048.487l.98-.194A1.5 1.5 0 0 1 1 13.5v-.458zm16 .458v-.458h-1v.458q0 .151-.029.293l.981.194Q16 13.75 16 13.5M.421 14.89c.183.272.417.506.69.689l.556-.831a1.5 1.5 0 0 1-.415-.415zm14.469.689c.272-.183.506-.417.689-.69l-.831-.556c-.11.164-.251.305-.415.415l.556.83zm-12.877.373Q2.25 16 2.5 16h.458v-1H2.5q-.151 0-.293-.029zM13.5 16q.25 0 .487-.048l-.194-.98A1.5 1.5 0 0 1 13.5 15h-.458v1zm-9.625 0h.917v-1h-.917zm1.833 0h.917v-1h-.917zm1.834-1v1h.916v-1zm1.833 1h.917v-1h-.917zm1.833 0h.917v-1h-.917zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
                                     </svg>
-                                    添加链接
+                                    ${t('add_link')}
                                 </button>
                             </div>
                             <div class="col-auto ms-auto">
@@ -338,7 +351,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
                                         <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
                                     </svg>
-                                    切换到批量导入模式
+                                    ${t('switch_bulk')}
                                 </button>
                             </div>
                         </div>
@@ -349,7 +362,7 @@
                 return newDiv;
             }
 
-            function createLinkComponent(url, type='待解析', comment='待解析') {
+            function createLinkComponent(url, type=t('pending_parse'), comment=t('pending_parse')) {
                 var newDiv = document.createElement('div');
                 newDiv.className = 'link-item card p-2';
                 newDiv.innerHTML = `
@@ -361,19 +374,19 @@
                         </div>
                         <div class="col">
                             <div class="mb-2">
-                                <label>链接:</label>
+                                <label>${t('link')}</label>
                                 <input type="text" class="form-control link-url" value="${url || ''}">
                             </div>
                             <div class="mb-2">
-                                <label>类型:</label>
-                                <span class="badge bg-secondary">待解析</span>
-                                <label>备注:</label>
-                                <span class="badge bg-info">待解析</span>
+                                <label>${t('type')}</label>
+                                <span class="badge bg-secondary">${type}</span>
+                                <label>${t('note')}</label>
+                                <span class="badge bg-info">${comment}</span>
                             </div>
                             <div>
-                                <button type="button" class="btn btn-secondary btn-sm move-up">上移</button>
-                                <button type="button" class="btn btn-secondary btn-sm move-down">下移</button>
-                                <button type="button" class="btn btn-danger btn-sm remove-link">删除</button>
+                                <button type="button" class="btn btn-secondary btn-sm move-up">${t('move_up')}</button>
+                                <button type="button" class="btn btn-secondary btn-sm move-down">${t('move_down')}</button>
+                                <button type="button" class="btn btn-danger btn-sm remove-link">${t('delete')}</button>
                             </div>
                         </div>
                     </div>
@@ -382,10 +395,10 @@
             }
 
             function loadPage() {
-               fetch(window.location.href + 'api/')
+               fetch(new URL('api/', window.location.href))
                     .then(response => {
                     if (!response.ok) {
-                        throw new Error('网络错误或服务器异常');
+                        throw new Error(t('network_error'));
                     }
                     return response.json();
                     })
@@ -396,7 +409,7 @@
                             document.getElementById('accesskey').removeAttribute('readonly');
                             document.getElementById('accesskey').removeAttribute('disabled');
                         } else {
-                            document.getElementById('accesskey').value = '无明文密钥保存';
+                            document.getElementById('accesskey').value = t('no_plaintext_key');
                             document.getElementById('accesskey').setAttribute('readonly', true);
                             document.getElementById('accesskey').setAttribute('disabled', true);
                         }
@@ -497,7 +510,12 @@
                         }
                     }).catch(error => {
                         console.error('Error fetching API data:', error);
-                        document.getElementById('loading').textContent = "加载数据失败，请刷新重试。";
+                        const loading = document.getElementById('loading');
+                        if (loading) {
+                            loading.textContent = t('load_failed');
+                        } else {
+                            showToast('warning', t('load_failed'));
+                        }
                         });
             }
             // 监听保存密钥的复选框
@@ -518,7 +536,7 @@
                 hasUnsavedChanges = true;
                 newGroupCount = newGroupCount + 1;
                 var newIndex = document.querySelectorAll('.nav-item.existingGroup').length + newGroupCount;
-                var newGroupName = '新分组' + '#' + newIndex;
+                var newGroupName = t('new_group') + ' #' + newIndex;
                 // 创建新的分组组件
                 var newGroupComponent = createGroupComponent(newGroupName, newIndex, true);
 
@@ -599,14 +617,14 @@
                         body: formData
                     });
                     if (!response.ok) {
-                        showToast('warning', '网络错误，保存密钥失败');
+                        showToast('warning', t('save_key_network_failed'));
                     }
                     const data = await response.json();
-                    showToast('success', '新密钥提交成功');
+                    showToast('success', t('key_saved'));
                     loadPage();
                 } catch (error) {
                     console.error(error);
-                    showToast('warning', '保存密钥失败');
+                    showToast('warning', t('save_key_failed'));
                 }
             });
 
@@ -697,7 +715,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
                             <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
                         </svg>
-                        切换到批量导入模式
+                        ${t('switch_bulk')}
                     `;
                 } else {
                     // 切换到文本模式，从组件中拼接文本
@@ -714,7 +732,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-toggles" viewBox="0 0 16 16">
                         <path d="M4.5 9a3.5 3.5 0 1 0 0 7h7a3.5 3.5 0 1 0 0-7zm7 6a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m-7-14a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m2.45 0A3.5 3.5 0 0 1 8 3.5 3.5 3.5 0 0 1 6.95 6h4.55a2.5 2.5 0 0 0 0-5zM4.5 0h7a3.5 3.5 0 1 1 0 7h-7a3.5 3.5 0 1 1 0-7"/>
                     </svg>
-                    切换到组件模式`;
+                    ${t('switch_components')}`;
                 }
             }
 
@@ -768,27 +786,27 @@
                         });
 
                         if (!response.ok) {
-                            showToast('warning', '网络错误，保存分组失败');
+                            showToast('warning', t('save_groups_network_failed'));
                         } else {
                             const data = await response.json();
-                            showToast('success', '分组保存成功');
+                            showToast('success', t('groups_saved'));
                         }
                     } catch (error) {
                         console.error(error);
-                        showToast('warning', '保存分组失败');
+                        showToast('warning', t('save_groups_failed'));
                     }
                 });
 
                 document.getElementById('reloadPageBtn').addEventListener('click', function() {
                     loadPage();
-                    showToast('info', '页面已刷新');
+                    showToast('info', t('page_reloaded'));
                 });
 
                 // 提示用户在页面中有未保存更改时离开页面
                 window.addEventListener('beforeunload', function (e) {
                     if (hasUnsavedChanges) {
                         e.preventDefault();
-                        e.returnValue = '您有未保存的更改，确定要离开此页面吗？';
+                        e.returnValue = t('unsaved_changes');
                     }
                 });
 
@@ -803,22 +821,22 @@
                 async function submitResetPasswordForm(form) {
                     const formData = new FormData(form);
                     try {
-                        const response = await fetch( window.location.href + 'user/', {
+                        const response = await fetch(new URL('user/', window.location.href), {
                             method: 'POST', 
                             body: formData
                         });
                         if (!response.ok) {
-                            throw new Error('网络错误或服务器异常');
+                            throw new Error(t('network_error'));
                         }
                         const data = await response.json();
                         if (data.success) {
-                            showToast('success', '密码重设成功');
+                            showToast('success', t('password_reset_success'));
                         } else {
-                            showToast('warning', '密码重设失败');
+                            showToast('warning', t('password_reset_failed'));
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        showToast('warning', '密码重设失败');
+                        showToast('warning', t('password_reset_failed'));
                     }
                 }
 
@@ -839,15 +857,15 @@
                 steps: [
                 {
                     popover: {
-                        title: '欢迎',
-                        description: '欢迎使用公共订阅编辑器(SYVS)！我们将引导您完成初始设置。'
+                        title: t('tour_welcome_title'),
+                        description: t('tour_welcome_description')
                     }
                 },
                 {
                     element: '#resetPasswordModal .modal-content',
                     popover: {
-                        title: '重设页面密码',
-                        description: '为了保证安全，请重新设置页面登录密码',
+                        title: t('tour_password_title'),
+                        description: t('tour_password_description'),
                         position: 'bottom'
                     },
                      onHighlightStarted: () => {
@@ -863,8 +881,8 @@
                 {
                     element: '.btn-success[onclick="generatepwd()"]',
                     popover: {
-                        title: '生成密钥',
-                        description: '点击此按钮（或者直接点击下一步）生成一个新的分享密钥。',
+                        title: t('tour_key_title'),
+                        description: t('tour_key_description'),
                         position: 'bottom'
                     },
                      onHighlighted: () => {
@@ -876,16 +894,16 @@
                 {
                     element: '#accesskey',
                     popover: {
-                        title: '新的密钥',
-                        description: '我们已经为您生成了新的密钥，您可以在此处查看。',
+                        title: t('tour_new_key_title'),
+                        description: t('tour_new_key_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     element: '#savePwd',
                     popover: {
-                        title: '保存分组',
-                        description: '完成编辑后，点击此按钮保存您的分组和链接。（或者直接点击下一步，我们将帮助您保存）',
+                        title: t('tour_save_title'),
+                        description: t('tour_save_description'),
                         position: 'bottom'
                     },
                      onDeselected: () => {
@@ -896,47 +914,47 @@
                 {
                     element: '#myTab',
                     popover: {
-                        title: '分组列表',
-                        description: '这是您的分组列表，您可以在这里添加、删除和编辑分组。我们支持尽可能多的分组。',
+                        title: t('tour_groups_title'),
+                        description: t('tour_groups_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     element: '#myTabContent',
                     popover: {
-                        title: '分组内容',
-                        description: '这是当前选中分组的内容，您可以在这里添加、删除和编辑链接。',
+                        title: t('tour_content_title'),
+                        description: t('tour_content_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     element: '.alert-success',
                     popover: {
-                        title: '订阅分享链接',
-                        description: '点击复制订阅分享链接(Subscription)。注意，当您更改分组名称并保存时，链接也会随之更改。单击链接可以复制到剪贴板。',
+                        title: t('tour_share_title'),
+                        description: t('tour_share_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     element: '.toggleLinksMode',
                     popover: {
-                        title: '切换模式',
-                        description: '点击此按钮切换到批量导入模式，您可以一次性从代理工具中导出并粘贴多个Vmess, Vless链接。',
+                        title: t('tour_mode_title'),
+                        description: t('tour_mode_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     element: '#saveLinksSection',
                     popover: {
-                        title: '保存更改和刷新页面',
-                        description: '如果做出了更改，别忘了点击此按钮保存您的分组和链接。在保存更改之前，可以重新加载数据。',
+                        title: t('tour_changes_title'),
+                        description: t('tour_changes_description'),
                         position: 'bottom'
                     }
                 },
                 {
                     popover: {
-                        title: '大功告成',
-                        description: '您已经完成了初始设置！现在可以开始使用公共订阅编辑器(SYVS)了！',
+                        title: t('tour_done_title'),
+                        description: t('tour_done_description'),
                         position: 'bottom'
                     }
                 }

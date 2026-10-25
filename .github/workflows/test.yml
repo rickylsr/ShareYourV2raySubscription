@@ -1,0 +1,110 @@
+name: Test Docker and Cloudflare
+
+on:
+  push:
+    branches: [main, v3.1-dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      SYVS_TEST_PASSWORD: ci-disposable-test-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r tests/legacy/requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: node tests/node-adapters.test.mjs
+      - run: docker build -t syvs:test .
+      - run: docker build -f tests/legacy/Dockerfile -t syvs:legacy-fixture .
+      - run: python tests/upgrade_docker.py syvs:legacy-fixture syvs:test
+      - name: Exercise Docker and persistent volume
+        run: |
+          docker run -d --name syvs-test -p 127.0.0.1:18123:8000 \
+            -e DEFAULT_PASSWORD="$SYVS_TEST_PASSWORD" \
+            -v syvs-test-data:/home/app/data syvs:test
+          python scripts/wait_http.py http://127.0.0.1:18123/
+          python scripts/smoke_http.py http://127.0.0.1:18123
+          docker rm -f syvs-test
+          docker run -d --name syvs-test -p 127.0.0.1:18123:8000 \
+            -e DEFAULT_PASSWORD=changed-bootstrap \
+            -v syvs-test-data:/home/app/data syvs:test
+          python scripts/wait_http.py http://127.0.0.1:18123/
+          python scripts/smoke_http.py http://127.0.0.1:18123 --verify-persisted
+      - name: Docker logs
+        if: failure()
+        run: docker logs syvs-test
+      - name: Clean up
+        if: always()
+        run: |
+          docker rm -f syvs-test || true
+          docker volume rm syvs-test-data || true
+
+  cloudflare:
+    runs-on: ubuntu-latest
+    env:
+      SYVS_TEST_PASSWORD: ci-disposable-test-password
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            cloudflare/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install and check Worker packaging
+        run: |
+          npm ci
+          npm test
+          npm run check
+          npm run db:local
+      - name: Verify local Free and Paid mode switching
+        run: python scripts/workers_modes_local.py
+      - name: Exercise workerd and D1 persistence
+        run: |
+          printf 'DEFAULT_PASSWORD=%s\n' "$SYVS_TEST_PASSWORD" > .dev.vars
+          python -c "import secrets; print('AUTH_SECRET=' + secrets.token_hex(32))" >> .dev.vars
+          setsid npm run dev -- --local --ip 127.0.0.1 --port 8787 > "$RUNNER_TEMP/syvs-worker.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill -- -"$worker_pid" 2>/dev/null || kill "$worker_pid" 2>/dev/null || true' EXIT
+          python scripts/wait_http.py http://127.0.0.1:8787/
+          python scripts/smoke_http.py http://127.0.0.1:8787
+          SYVS_TEST_PASSWORD="$SYVS_TEST_PASSWORD-changed" python scripts/free_budget_http.py http://127.0.0.1:8787
+      - name: Verify D1 after restarting the runtime
+        run: |
+          setsid npm run dev -- --local --ip 127.0.0.1 --port 8788 > "$RUNNER_TEMP/syvs-worker-restart.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill -- -"$worker_pid" 2>/dev/null || kill "$worker_pid" 2>/dev/null || true' EXIT
+          python scripts/wait_http.py http://127.0.0.1:8788/
+          python scripts/smoke_http.py http://127.0.0.1:8788 --verify-persisted
+      - name: Verify missing administrator secret fails closed
+        run: |
+          mv .dev.vars .dev.vars.configured
+          setsid npm run dev -- --local --ip 127.0.0.1 --port 8789 > "$RUNNER_TEMP/syvs-worker-no-secret.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill -- -"$worker_pid" 2>/dev/null || kill "$worker_pid" 2>/dev/null || true' EXIT
+          python scripts/wait_http.py http://127.0.0.1:8789/editor/ 503
+      - name: Verify missing independent auth secret fails closed
+        run: |
+          printf 'DEFAULT_PASSWORD=%s\n' "$SYVS_TEST_PASSWORD" > .dev.vars
+          setsid npm run dev -- --local --ip 127.0.0.1 --port 8790 > "$RUNNER_TEMP/syvs-worker-no-auth-secret.log" 2>&1 &
+          worker_pid=$!
+          trap 'kill -- -"$worker_pid" 2>/dev/null || kill "$worker_pid" 2>/dev/null || true' EXIT
+          python scripts/wait_http.py http://127.0.0.1:8790/editor/ 503
+      - name: Worker logs
+        if: failure()
+        run: cat "$RUNNER_TEMP"/syvs-worker*.log

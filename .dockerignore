@@ -1,0 +1,8 @@
+.git
+**/node_modules
+**/__pycache__
+**/.wrangler
+**/.venv
+**/.dev.vars*
+**/generated
+Screenshot.png

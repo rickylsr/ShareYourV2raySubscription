@@ -1,0 +1,17 @@
+{
+  "name": "syvs-cloudflare",
+  "private": true,
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node local.mjs dev",
+    "deploy": "node deploy.mjs",
+    "db:local": "node local.mjs db",
+    "check": "node local.mjs check",
+    "test": "node test/all.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0",
+    "nunjucks": "3.2.4"
+  },
+  "type": "module"
+}

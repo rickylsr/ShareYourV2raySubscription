@@ -1,0 +1,4 @@
+# Set a unique administrator password during deployment or in .dev.vars locally.
+DEFAULT_PASSWORD=
+# Independent key: generate with `openssl rand -hex 32`. Keep this stable and private.
+AUTH_SECRET=

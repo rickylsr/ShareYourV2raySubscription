@@ -1,0 +1,1 @@
+{ "name": "syvs-self-hosted", "private": true, "type": "module", "scripts": { "start": "node server.js" } }

@@ -1,0 +1,38 @@
+{
+  "$schema": "cloudflare/node_modules/wrangler/config-schema.json",
+  "name": "share-your-v2ray-subscription",
+  "main": "cloudflare/src/worker.js",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": [],
+  "minify": true,
+  "upload_source_maps": true,
+  "build": {
+    "cwd": ".",
+    "command": "npm run build",
+    "watch_dir": [
+      "cloudflare/src",
+      "app/templates",
+      "app/translations",
+      "shared"
+    ]
+  },
+  "vars": {
+    "SHAREURL": "subscription/",
+    "BASEURL": "",
+    "WORKERS_MODE": "free"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "syvs",
+      "database_id": ""
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  }
+}
