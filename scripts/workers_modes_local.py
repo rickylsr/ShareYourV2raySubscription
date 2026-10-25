@@ -61,7 +61,7 @@ def main():
             process = None
 
             def request(path, payload=None, content_type='application/json', authenticated=True):
-                headers = {}
+                headers = {'X-SYVS-Request': '1'}
                 if authenticated:
                     headers['Authorization'] = 'Basic ' + base64.b64encode(f'user:{password}'.encode()).decode()
                 if payload is not None:

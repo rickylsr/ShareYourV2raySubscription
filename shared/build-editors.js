@@ -9,10 +9,6 @@ function replaceOnce(before, after) {
 source = source.replaceAll('language_options.items()', 'language_options');
 // Reuse the existing API loader; node markup is rendered in the browser.
 replaceOnce('function loadPage() {\n               fetch(', 'function loadPage() {\n               return fetch(');
-replaceOnce('.then(response => {', '.then(async response => {');
-replaceOnce("                    if (!response.ok) {\n                        throw new Error(t('network_error'));\n                    }\n                    return response.json();",
-  "                    if (!response.ok) {\n                        const failure = await response.json().catch(() => ({}));\n                        throw new Error(failure.message || t('network_error'));\n                    }\n                    return response.json();");
-replaceOnce("loading.textContent = t('load_failed');", "loading.textContent = error.message || t('load_failed');");
 replaceOnce('                    }).catch(error => {', "                        window.dispatchEvent(new Event('syvs:loaded'));\n                    }).catch(error => {");
 replaceOnce('function createGroupComponent(name, index, show_the_component=false, share_link=\'\') {',
   "function createGroupComponent(name, index, show_the_component=false, share_link='') {\n                name = syvsEscapeHtml(name); share_link = syvsEscapeHtml(share_link);");
@@ -21,10 +17,6 @@ replaceOnce("function createLinkComponent(url, type=t('pending_parse'), comment=
 replaceOnce('${group.name}', '${syvsEscapeHtml(group.name)}');
 replaceOnce("document.addEventListener('DOMContentLoaded', function() {",
   "window.addEventListener('syvs:loaded', function() {\n            if (window.syvsTourStarted) return; window.syvsTourStarted = true;");
-replaceOnce("showToast('warning', t('save_groups_network_failed'));",
-  "const failure = await response.json(); showToast('warning', syvsEscapeHtml(failure.message || t('save_groups_network_failed')));");
-replaceOnce("showToast('warning', t('save_key_network_failed'));",
-  "const failure = await response.json(); showToast('warning', syvsEscapeHtml(failure.message || t('save_key_network_failed'))); return;");
 for (const id of ['saveLinksBtn', 'savePwd', 'add-group-tab']) source = source.replace(`id="${id}"`, `id="${id}" disabled`);
 replaceOnce('<ul class="nav nav-underline mb-3"', '<div id="loading" role="status" class="alert alert-info">{{ cloud_loading }}</div>{% if cloud_limits %}<p class="text-secondary small">{{ cloud_limits }}</p>{% endif %}<ul class="nav nav-underline mb-3"');
 const bootstrap = await readFile(new URL('./editor-bootstrap.js', import.meta.url), 'utf8');

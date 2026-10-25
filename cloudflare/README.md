@@ -16,7 +16,8 @@ The button uses the `v3.1-dev` development branch.
 4. Use the repository root (`/`), build command `npm run build`, and deploy command
    `npm run deploy`. Only Node.js/npm is required for this target.
 5. Leave `WORKERS_MODE=free` by default, or select `paid` for an account with Workers Paid enabled (see switching below).
-6. Open `https://<worker>.workers.dev/editor/`. The username is `user`.
+6. Configure rate limiting or access control as described below before exposing the editor.
+7. Open `https://<worker>.workers.dev/editor/`. The username is `user`.
 
 The Worker returns HTTP 503 until both secrets are configured. It never falls
 back to Docker's default password. `npm run deploy` initializes the D1 settings table idempotently after uploading. HTTP requests never create tables or run migrations.
@@ -63,6 +64,16 @@ Subsequent `npm run deploy` calls preserve existing secrets and D1 data. Keep th
 same database ID when updating. Optional Worker variables `SHAREURL` (default
 `subscription/`) and `BASEURL` (default empty, using the request origin) match the
 self-hosted settings. `SHAREURL` must be a non-empty path outside `/editor`.
+
+## Public deployments: login protection and POST requests
+
+**Configure rate limiting or access control before exposing the editor.** The application has no built-in distributed login limiter. Fast password verification, AUTH_SECRET and CSRF protection do not prevent online guessing.
+
+For a custom domain, create a rate limiting rule in its Zone matching `starts_with(http.request.uri.path, "/editor")`, counting by client IP across all HTTP methods. Basic Auth verifies credentials on GET pages and API reads too, so limiting password-change POSTs alone is insufficient. Start with 20 requests per IP per 10 seconds and a 10-second block, then tune for ordinary editing. This is a starting point, not protection against distributed attacks; use access control where needed. Leave public subscription paths outside the login rule. Available periods, actions and rule counts depend on the domain's WAF plan, separately from Workers Paid. See [rate limiting rules and availability](https://developers.cloudflare.com/waf/rate-limiting-rules/).
+
+A Zone rule does not establish protection for alternate workers.dev or preview entrypoints. When protecting a custom domain, set `workers_dev: false` and `preview_urls: false`, and review/disable other public preview, version and deployment entrypoints. For a workers.dev-only deployment, restrict access first with [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/#manage-access-to-workersdev). Protecting the entire Worker also requires subscription clients to authenticate; otherwise use a setup that protects only the editor. The application does not provision these rules or policies automatically.
+
+Every POST in Docker and Workers requires `X-SYVS-Request: 1`. A supplied Origin must equal the request origin; cross-origin Sec-Fetch-Site values, including same-site, are rejected. The editor sends the header automatically. Custom API clients must add it, for example: `curl -u user -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=new-share-key' https://your-domain/editor/`. Missing headers or conflicting origins return 403. Cross-origin CORS writes are not enabled. Docker reverse proxies must preserve the external Host and configure trusted HTTPS forwarding correctly; BASEURL controls share links, not the CSRF origin policy.
 
 ## Select and switch Free / Paid
 

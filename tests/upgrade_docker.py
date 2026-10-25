@@ -30,7 +30,7 @@ def docker(*args):
 
 
 def call(url, password, path='/editor/api/', *, username='user', payload=None, form=None):
-    headers = {'Authorization': 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()}
+    headers = {'X-SYVS-Request': '1', 'Authorization': 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()}
     body = None
     if payload is not None:
         body = json.dumps(payload, ensure_ascii=False).encode()

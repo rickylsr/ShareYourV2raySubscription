@@ -113,18 +113,30 @@ export function createApplication(platform) {
       return reply('Configure a non-empty SHAREURL path outside /editor.', 503);
     }
     const path = url.pathname;
+    let subscriptionPath;
+    try { subscriptionPath = decodeURIComponent(path); }
+    catch { throw new RequestError(400, 'Invalid request path encoding.'); }
     if (path === '/' && ['GET', 'HEAD'].includes(request.method)) {
       return reply('SYVS - Share Your V2ray Subscriptions');
     }
     const editorPaths = ['/editor/', '/editor/api/', '/editor/user/'];
-    if (editorPaths.includes(path + '/') || path + '/' === '/' + shareurl) {
+    if (editorPaths.includes(path + '/') || subscriptionPath + '/' === '/' + shareurl) {
       url.pathname += '/';
       return reply(null, 308, { Location: url.toString() });
     }
     const isEditor = editorPaths.includes(path);
-    if (!isEditor && path !== '/' + shareurl) return reply('Not found', 404);
+    if (!isEditor && subscriptionPath !== '/' + shareurl) return reply('Not found', 404);
     const allowed = isEditor ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD'];
     if (!allowed.includes(request.method)) return reply('Method not allowed', 405, { Allow: allowed.join(', ') });
+    if (request.method === 'POST') {
+      const origin = request.headers.get('Origin');
+      const site = request.headers.get('Sec-Fetch-Site');
+      if (request.headers.get('X-SYVS-Request') !== '1' ||
+          (origin !== null && origin !== url.origin) ||
+          (site !== null && site !== 'same-origin' && site !== 'none')) {
+        throw new RequestError(403, 'Request blocked. Reload the editor and try again.');
+      }
+    }
     if (request.method === 'POST' && (request.headers.get('Content-Type') || '').length > limits.contentTypeLength) {
       throw new RequestError(400, 'Content-Type is too long.');
     }

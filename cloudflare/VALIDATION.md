@@ -146,6 +146,29 @@ The clean root entry passed local HTTP acceptance and all Free boundary checks.
 The rebuilt Docker image passed legacy scrypt/PBKDF2 upgrades, restart, rollback
 and individual bind-mounted-file compatibility checks after these changes.
 
+## Review fixes: CSRF, Unicode paths and editor errors (local only)
+
+The shared core requires `X-SYVS-Request: 1` on all POSTs, rejects conflicting
+Origin / Sec-Fetch-Site values, and checks these before authentication or storage.
+Both adapters use this policy. Subscription paths decode UTF-8 percent encoding
+once, including spaces and literal percent signs; private endpoints keep their
+canonical ASCII spelling for edge path rules. The editor now shares one response
+reader for loads and all saves, retaining JSON/plain-text failure reasons and
+status codes while escaping text shown in HTML.
+
+Twenty-two JavaScript tests and eight legacy Python contracts passed. A local
+Chromium test exercised real editor saves and password changes, malicious forms
+from a second local origin, Unicode SHAREURL, and JSON/plain-text failures across
+all three save actions. Its UI-library stubs prevent CDN access. The rebuilt
+Docker image passed old-image upgrade, restart, rollback and individual-file
+mount tests. Local workerd/D1 Free/Paid switching and packaging dry-run passed.
+No public deployments or new cloud CPU measurements were made for these fixes.
+
+Public deployment documentation now requires rate limiting or access control,
+covering GET authentication as well as POST, with guidance for alternate public
+entrypoints. This is operator configuration: the application does not provision
+WAF/Access policies or implement a distributed login limiter automatically.
+
 ## Publication
 
 Development targets the `v3.1-dev` branch. Images have been built locally,

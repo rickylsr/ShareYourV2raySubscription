@@ -18,7 +18,8 @@ Docker 版本使用相同 JavaScript 核心与 JSON 适配层，保留 `data.jso
 4. 项目根目录选择仓库根目录（`/`），构建命令为 `npm run build`，部署命令为
    `npm run deploy`。此部署目标只需要 Node.js/npm。
 5. `WORKERS_MODE` 默认 `free`；已开通 Workers Paid 的账户可改为 `paid`，具体见下方切换说明。
-6. 部署完成后访问 `https://<worker>.workers.dev/editor/`，用户名为 `user`。
+6. 按下方“公网部署”说明配置登录限速或访问控制。
+7. 部署完成后访问 `https://<worker>.workers.dev/editor/`，用户名为 `user`。
 
 未配置两个 secrets 时服务返回 503，不会使用 Docker 的默认密码。
 `npm run deploy` 会在上传后幂等初始化 D1 设置表，HTTP 请求内不再建表或运行迁移。
@@ -60,6 +61,16 @@ npm run deploy -- --secrets-file /absolute/path/to/private.env
 后续运行 `npm run deploy` 会保留已有 secrets；保持数据库 ID 不变即可保留数据。
 Worker 的 `SHAREURL` 和 `BASEURL` 与 Docker 设置含义一致。
 `SHAREURL` 必须是非空路径，且不能占用 `/editor`。
+
+## 公网部署：登录限速与 POST 防护
+
+**对外开放编辑器前，必须配置登录入口的限速或访问控制。** 应用没有内置分布式登录限速；快速密码校验不提供在线防猜测能力。`AUTH_SECRET` 和下述 CSRF 防护也不能代替限速。
+
+自定义域名部署时，在域名所属 Zone 的安全规则中创建 Rate limiting rule，匹配 `starts_with(http.request.uri.path, "/editor")`，按访问者 IP 计数，并覆盖所有 HTTP 方法。Basic Auth 会在页面和 API 的 GET 请求上校验密码，不能只限制改密 POST。可从每 IP 每 10 秒 20 次、阻断 10 秒开始，根据正常编辑操作调整阈值；这是部署起点，分布式攻击仍需额外访问控制。不要把公开订阅接口加入登录规则，以免客户端更新订阅被误阻断。规则数量、周期、动作由域名的 WAF 套餐决定，与 Workers Paid 容量策略分别配置。参见 [限速规则与套餐](https://developers.cloudflare.com/waf/rate-limiting-rules/)。
+
+域名 Zone 的规则不等于保护了所有 `workers.dev` / 预览入口。使用自定义域名保护后，在配置中设置 `workers_dev: false`、`preview_urls: false`，并检查和关闭其他公开预览、版本及部署入口，防止绕过域名规则。只用 `workers.dev` 时，应先通过 [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/#manage-access-to-workersdev) 限制访问；如果整个 Worker 都受 Access 保护，订阅客户端也需能够认证，否则应改用仅保护编辑器的部署方案。不要假设应用已自动创建这些规则或策略。
+
+所有 POST（Docker 和 Workers）均要求 `X-SYVS-Request: 1`。浏览器还会校验 `Origin` 为当前请求源，并拒绝 `Sec-Fetch-Site` 声明的跨源请求，包括同站不同源。编辑器自动发送该请求头；自定义 API 脚本需添加它，例如 `curl -u user -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=新分享密钥' https://你的域名/editor/`。缺少请求头或来源不符会返回 403；接口不开放跨源 CORS 写入。Docker 反向代理应保留外部 Host，并正确配置受信任的 HTTPS 转发头；`BASEURL` 仅控制分享链接，不是 CSRF 来源白名单。
 
 ## 选择与切换 Free / Paid
 

@@ -394,14 +394,33 @@
                 return newDiv;
             }
 
+            // BEGIN SYVS HTTP HELPERS
+            function syvsEscapeHtml(value) {
+                return String(value ?? '').replace(/[&<>"']/g, character => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+                })[character]);
+            }
+
+            async function readEditorResponse(response) {
+                const text = await response.text();
+                let data;
+                try { data = JSON.parse(text); } catch {}
+                if (!response.ok) {
+                    const message = [data?.message, data?.error].find(value => typeof value === 'string' && value.trim());
+                    const plain = (response.headers.get('Content-Type') || '').toLowerCase().startsWith('text/plain')
+                        ? text.trim().slice(0, 512) : '';
+                    throw new Error(`HTTP ${response.status}: ${message || plain || response.statusText || t('network_error')}`);
+                }
+                if (!data || typeof data !== 'object') {
+                    throw new Error(`HTTP ${response.status}: ${t('invalid_server_response')}`);
+                }
+                return data;
+            }
+            // END SYVS HTTP HELPERS
+
             function loadPage() {
                fetch(new URL('api/', window.location.href))
-                    .then(response => {
-                    if (!response.ok) {
-                        throw new Error(t('network_error'));
-                    }
-                    return response.json();
-                    })
+                    .then(readEditorResponse)
                     .then(data => {
                         // 处理数据并更新页面
                         if (data.accesskey) {
@@ -512,7 +531,7 @@
                         console.error('Error fetching API data:', error);
                         const loading = document.getElementById('loading');
                         if (loading) {
-                            loading.textContent = t('load_failed');
+                            loading.textContent = error.message || t('load_failed');
                         } else {
                             showToast('warning', t('load_failed'));
                         }
@@ -614,17 +633,15 @@
                 try {
                     const response = await fetch(window.location.href, {
                         method: 'POST',
+                        headers: { 'X-SYVS-Request': '1' },
                         body: formData
                     });
-                    if (!response.ok) {
-                        showToast('warning', t('save_key_network_failed'));
-                    }
-                    const data = await response.json();
+                    const data = await readEditorResponse(response);
                     showToast('success', t('key_saved'));
                     loadPage();
                 } catch (error) {
                     console.error(error);
-                    showToast('warning', t('save_key_failed'));
+                    showToast('warning', syvsEscapeHtml(error.message || t('save_key_failed')));
                 }
             });
 
@@ -780,20 +797,17 @@
                         const response = await fetch(window.location.href, {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'X-SYVS-Request': '1'
                             },
                             body: JSON.stringify({groups: groupsData})
                         });
 
-                        if (!response.ok) {
-                            showToast('warning', t('save_groups_network_failed'));
-                        } else {
-                            const data = await response.json();
-                            showToast('success', t('groups_saved'));
-                        }
+                        await readEditorResponse(response);
+                        showToast('success', t('groups_saved'));
                     } catch (error) {
                         console.error(error);
-                        showToast('warning', t('save_groups_failed'));
+                        showToast('warning', syvsEscapeHtml(error.message || t('save_groups_failed')));
                     }
                 });
 
@@ -822,13 +836,11 @@
                     const formData = new FormData(form);
                     try {
                         const response = await fetch(new URL('user/', window.location.href), {
-                            method: 'POST', 
+                            method: 'POST',
+                            headers: { 'X-SYVS-Request': '1' },
                             body: formData
                         });
-                        if (!response.ok) {
-                            throw new Error(t('network_error'));
-                        }
-                        const data = await response.json();
+                        const data = await readEditorResponse(response);
                         if (data.success) {
                             showToast('success', t('password_reset_success'));
                         } else {
@@ -836,7 +848,7 @@
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        showToast('warning', t('password_reset_failed'));
+                        showToast('warning', syvsEscapeHtml(error.message || t('password_reset_failed')));
                     }
                 }
 

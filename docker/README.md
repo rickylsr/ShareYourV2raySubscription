@@ -46,6 +46,16 @@ The runtime is Node.js 24. Custom entrypoints that explicitly invoke Python or
 Gunicorn must be adjusted; the standard image entrypoint and published deployment
 commands require no changes. `/home/app/data` remains the persistent interface.
 
+## POST clients and reverse proxies
+
+The editor includes CSRF protection automatically. Custom scripts that write to
+`/editor/`, `/editor/user/` or `/editor/api/` must send `X-SYVS-Request: 1`.
+Browser POSTs must come from the same origin; cross-origin requests return 403.
+Reverse proxies must preserve the external Host and configure trusted HTTPS
+forwarding (`FORWARDED_ALLOW_IPS`) correctly. BASEURL does not override the
+request origin. Public installations should also limit attempts to all `/editor`
+paths at their reverse proxy; Basic Auth checks GET requests as well as POSTs.
+
 ## Development
 
 The shared editor pages are generated at build time:
@@ -80,3 +90,10 @@ saves retain the original inodes, and rolls back to the old image using those fi
 For host-side adapter tests, install `tests/legacy/requirements.txt` in a Python
 virtual environment and run `node tests/node-adapters.test.mjs`. `PYTHON` can point
 to that virtual environment's executable. Production Docker requires no Python.
+
+Optional browser regression (after building pages): install Playwright/Chromium
+in your development environment and run `node tests/editor-browser.mjs`.
+`SYVS_PLAYWRIGHT_MODULE` and `SYVS_CHROMIUM_PATH` can select an existing installation.
+The test creates only temporary loopback servers and data, blocks external
+browser requests, and uses local UI-library stubs. It checks browser saves,
+cross-origin form rejection, Unicode share URLs and error displays.

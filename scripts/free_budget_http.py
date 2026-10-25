@@ -18,7 +18,7 @@ prefix = sys.argv[sys.argv.index('--prefix') + 1] if '--prefix' in sys.argv else
 
 
 def call(case, path, expected=200, *, payload=None, form=None, raw=None, content_type=None, method=None, credential=None):
-    headers = {'User-Agent': 'SYVS-Free-Budget-Test/3.1', 'Authorization': 'Basic ' + base64.b64encode(
+    headers = {'X-SYVS-Request': '1', 'User-Agent': 'SYVS-Free-Budget-Test/3.1', 'Authorization': 'Basic ' + base64.b64encode(
         ('user:' + (password if credential is None else credential)).encode()).decode()}
     body = raw
     if payload is not None:

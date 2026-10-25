@@ -77,5 +77,6 @@
   "tour_changes_title": "Save changes and reload",
   "tour_changes_description": "Remember to save your groups and links after making changes. You can reload the stored data before saving.",
   "tour_done_title": "All done",
-  "tour_done_description": "Initial setup is complete. You can now start using the SYVS subscription editor!"
+  "tour_done_description": "Initial setup is complete. You can now start using the SYVS subscription editor!",
+  "invalid_server_response": "Invalid server response. Reload and try again."
 }

@@ -18,7 +18,7 @@ def smoke(base_url, verify_persisted=False):
     new_password = password + '-changed'
 
     def call(path, *, data=None, payload=None, authenticated=True, pwd=None):
-        headers = {'User-Agent': 'SYVS-Deployment-Test/3.1'}
+        headers = {'X-SYVS-Request': '1', 'User-Agent': 'SYVS-Deployment-Test/3.1'}
         if authenticated:
             token = base64.b64encode(f'user:{pwd or password}'.encode()).decode()
             headers['Authorization'] = 'Basic ' + token

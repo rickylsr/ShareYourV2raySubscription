@@ -77,5 +77,6 @@
   "tour_changes_title": "保存更改和刷新页面",
   "tour_changes_description": "如果做出了更改，别忘了保存您的分组和链接。在保存更改之前，可以重新加载数据。",
   "tour_done_title": "大功告成",
-  "tour_done_description": "您已经完成了初始设置！现在可以开始使用公共订阅编辑器（SYVS）了！"
+  "tour_done_description": "您已经完成了初始设置！现在可以开始使用公共订阅编辑器（SYVS）了！",
+  "invalid_server_response": "服务器返回的数据格式不正确，请刷新后重试。"
 }

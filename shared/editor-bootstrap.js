@@ -1,9 +1,4 @@
-// Appended only to Cloudflare HTML; Docker's template is unchanged.
-function syvsEscapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, character => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[character]);
-}
+// Appended to the shared Docker and Cloudflare editor pages.
 window.addEventListener('syvs:loaded', function () {
   for (const id of ['saveLinksBtn', 'savePwd', 'add-group-tab']) document.getElementById(id).disabled = false;
   document.getElementById('loading').hidden = true;
