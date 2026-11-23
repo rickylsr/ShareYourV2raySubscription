@@ -4,6 +4,7 @@ Exercises reads, writes, password changes, configured maximum data sizes and
 rejections. Measure cpuTime from Workers tail; client latency is not CPU time.
 """
 
+from session_http import login_cookie
 import base64
 import json
 import os
@@ -17,9 +18,20 @@ password = os.environ['SYVS_TEST_PASSWORD']
 prefix = sys.argv[sys.argv.index('--prefix') + 1] if '--prefix' in sys.argv else 'free-'
 
 
+cookies = {}
+
+
 def call(case, path, expected=200, *, payload=None, form=None, raw=None, content_type=None, method=None, credential=None):
-    headers = {'X-SYVS-Request': '1', 'User-Agent': 'SYVS-Free-Budget-Test/3.1', 'Authorization': 'Basic ' + base64.b64encode(
-        ('user:' + (password if credential is None else credential)).encode()).decode()}
+    headers = {'X-SYVS-Request': '1', 'User-Agent': 'SYVS-Free-Budget-Test/3.1'}
+    if path.startswith('/editor/'):
+        pwd = credential if credential is not None else password
+        if pwd not in cookies:
+            try:
+                cookies[pwd] = login_cookie(base, pwd)
+            except HTTPError as error:
+                assert expected == error.code == 401
+                return error.read()
+        headers['Cookie'] = cookies[pwd]
     body = raw
     if payload is not None:
         body = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).encode()

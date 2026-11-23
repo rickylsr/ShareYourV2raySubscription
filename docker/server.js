@@ -22,7 +22,7 @@ const server = http.createServer(async (incoming, outgoing) => {
       method, headers,
       ...(!['GET', 'HEAD'].includes(method) ? { body: Readable.toWeb(incoming), duplex: 'half' } : {}),
     });
-    const response = await application.fetch(request, env);
+    const response = await application.fetch(request, { ...env, clientAddress: incoming.socket.remoteAddress });
     outgoing.statusCode = response.status;
     for (const [name, value] of response.headers) outgoing.setHeader(name, value);
     // Gunicorn's former sync worker also closed each connection. Closing avoids

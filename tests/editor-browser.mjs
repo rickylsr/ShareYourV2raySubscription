@@ -12,7 +12,6 @@ const { chromium } = await import(process.env.SYVS_PLAYWRIGHT_MODULE || 'playwri
 const root = fileURLToPath(new URL('../', import.meta.url));
 const directory = await mkdtemp(path.join(tmpdir(), 'syvs-browser-'));
 const password = 'local-browser-password';
-const authorization = 'Basic ' + Buffer.from(`user:${password}`).toString('base64');
 const listener = http.createServer();
 await new Promise(resolve => listener.listen(0, '127.0.0.1', resolve));
 const port = listener.address().port;
@@ -42,7 +41,7 @@ try {
     ...(process.env.SYVS_CHROMIUM_PATH ? { executablePath: process.env.SYVS_CHROMIUM_PATH } : {}),
     ...(process.env.SYVS_BROWSER_NO_SANDBOX === '1' ? { args: ['--no-sandbox'] } : {}),
   });
-  const context = await browser.newContext({ httpCredentials: { origin, username: 'user', password }, serviceWorkers: 'block' });
+  const context = await browser.newContext({ serviceWorkers: 'block' });
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if ([origin, evilOrigin].includes(url.origin)) return route.continue();
@@ -58,7 +57,17 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('dialog', dialog => dialog.accept());
+  await page.setViewportSize({ width: 360, height: 740 });
   await page.goto(origin + '/editor/?lang=en');
+  assert.equal(await page.title(), 'Sign in · SYVS Subscription Editor');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.locator('#password').fill('incorrect');
+  await page.locator('#login button').click();
+  await page.getByText('Incorrect username or password. Try again.').waitFor();
+  await page.locator('#password').fill(password);
+  await page.locator('#login button').click();
+  await page.waitForURL('**/editor/?lang=en');
+  await page.setViewportSize({ width: 1200, height: 800 });
   await page.waitForFunction(() => document.getElementById('loading').hidden, null, { timeout: 10000 }).catch(async error => {
     throw new Error(`${error.message}; page errors: ${errors.join('; ')}; loading: ${await page.locator('#loading').textContent()}`);
   });
@@ -68,6 +77,20 @@ try {
     await action();
     return response;
   };
+  await context.request.post(origin + '/editor/logout/', { headers: { 'X-SYVS-Request': '1' } });
+  const expired = await save(() => page.locator('#saveLinksBtn').click());
+  assert.equal(expired.status(), 401);
+  await page.locator('#sessionNotice').waitFor();
+  const reauth = context.waitForEvent('page');
+  await page.locator('#sessionNotice a').click();
+  const loginTab = await reauth;
+  await loginTab.locator('#password').fill(password);
+  await loginTab.locator('#login button').click();
+  await loginTab.waitForURL('**/editor/?lang=en');
+  await loginTab.close();
+  assert.equal(await page.locator('.groupNameInput').first().inputValue(), 'browser-group');
+  const cookie = (await context.cookies()).find(item => item.name === 'syvs_session');
+  const headers = { Cookie: cookie.name + '=' + cookie.value };
   let response = await save(() => page.locator('#saveLinksBtn').click());
   assert.equal(response.status(), 200);
   assert.equal(response.request().headers()['x-syvs-request'], '1');
@@ -75,7 +98,7 @@ try {
   response = await save(() => page.locator('#accesskeyForm').evaluate(form => form.requestSubmit()));
   assert.equal(response.status(), 200);
   await page.waitForFunction(() => document.getElementById('accesskey').value === 'browser-key');
-  const state = () => fetch(origin + '/editor/api/', { headers: { Authorization: authorization } }).then(response => response.json());
+  const state = () => fetch(origin + '/editor/api/', { headers }).then(response => response.json());
   const before = await state();
   const evil = await context.newPage();
   await evil.goto(evilOrigin);
@@ -113,9 +136,12 @@ try {
   }
   response = await save(() => page.locator('#resetPasswordForm').evaluate(form => form.requestSubmit()));
   assert.equal(response.status(), 200);
-  assert.equal((await fetch(origin + '/editor/api/', { headers: { Authorization: authorization } })).status, 401);
-  const changed = 'Basic ' + Buffer.from('user:local-browser-changed').toString('base64');
-  assert.equal((await fetch(origin + '/editor/api/', { headers: { Authorization: changed } })).status, 200);
+  assert.equal((await fetch(origin + '/editor/api/', { headers })).status, 401);
+  await page.waitForURL('**/editor/login/');
+  await page.locator('#password').fill('local-browser-changed');
+  await page.locator('#login button').click();
+  await page.locator('#logout').click();
+  await page.waitForURL('**/editor/login/');
   assert.deepEqual(errors, []);
   console.log('PASS: real browser saves, cross-origin form rejection, Unicode SHAREURL, password change, JSON/text errors for all three saves, HTML escaping');
 } finally {

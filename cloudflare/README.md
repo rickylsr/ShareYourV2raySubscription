@@ -69,13 +69,11 @@ self-hosted settings. `SHAREURL` must be a non-empty path outside `/editor`.
 
 ## Public deployments: login protection and POST requests
 
-**Configure rate limiting or access control before exposing the editor.** The application has no built-in distributed login limiter. Fast password verification, AUTH_SECRET and CSRF protection do not prevent online guessing.
-
-For a custom domain, create a rate limiting rule in its Zone matching `starts_with(http.request.uri.path, "/editor")`, counting by client IP across all HTTP methods. Basic Auth verifies credentials on GET pages and API reads too, so limiting password-change POSTs alone is insufficient. Start with 20 requests per IP per 10 seconds and a 10-second block, then tune for ordinary editing. This is a starting point, not protection against distributed attacks; use access control where needed. Leave public subscription paths outside the login rule. Available periods, actions and rule counts depend on the domain's WAF plan, separately from Workers Paid. See [rate limiting rules and availability](https://developers.cloudflare.com/waf/rate-limiting-rules/).
+The login form allows 12 attempts per source IP per minute. For public deployments, additional Zone rate limits can target `POST /editor/login/`. Apply the updated `cloudflare/schema.sql` when upgrading an existing D1 database to create the session and rate-limit tables. The repository deployment script applies it automatically.
 
 A Zone rule does not establish protection for alternate workers.dev or preview entrypoints. When protecting a custom domain, set `workers_dev: false` and `preview_urls: false`, and review/disable other public preview, version and deployment entrypoints. For a workers.dev-only deployment, restrict access first with [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/#manage-access-to-workersdev). Protecting the entire Worker also requires subscription clients to authenticate; otherwise use a setup that protects only the editor. The application does not provision these rules or policies automatically.
 
-Every POST in Docker and Workers requires `X-SYVS-Request: 1`. A supplied Origin must equal the request origin; cross-origin Sec-Fetch-Site values, including same-site, are rejected. The editor sends the header automatically. Custom API clients must add it, for example: `curl -u user -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=new-share-key' https://your-domain/editor/`. Missing headers or conflicting origins return 403. Cross-origin CORS writes are not enabled. Docker reverse proxies must preserve the external Host and configure trusted HTTPS forwarding correctly; BASEURL controls share links, not the CSRF origin policy.
+Every POST in Docker and Workers requires `X-SYVS-Request: 1`. A supplied Origin must equal the request origin; cross-origin Sec-Fetch-Site values, including same-site, are rejected. The editor sends the header automatically. Custom API clients first submit the login form and save its cookie, then send the cookie and header, for example: `curl -b cookies.txt -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=new-share-key' https://your-domain/editor/`. Missing headers or conflicting origins return 403. Cross-origin CORS writes are not enabled. Docker reverse proxies must preserve the external Host and configure trusted HTTPS forwarding correctly; BASEURL configures share links and the same-host editor cookie path, not the CSRF origin policy.
 
 ## Select and switch Free / Paid
 
@@ -89,7 +87,7 @@ Before switching down, reduce the data to Free limits while still in Paid mode. 
 
 The Worker uses salted HMAC-SHA256 verifiers keyed by the independent 256-bit
 `AUTH_SECRET`. The key stays in Cloudflare secrets; D1 contains only the verifier.
-It retains Basic Auth and in-editor password changes without PBKDF2, including on
+It supports form login and in-editor password changes without PBKDF2, including on
 cold requests. Docker's adapter preserves legacy password verification and file compatibility.
 
 This design depends on keeping the random key separate from the database. A D1

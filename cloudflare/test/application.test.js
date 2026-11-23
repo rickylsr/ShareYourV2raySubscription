@@ -5,6 +5,7 @@ import { FREE_LIMITS, PAID_LIMITS, SELF_HOSTED_LIMITS } from '../../shared/limit
 
 function harness(limits = FREE_LIMITS, SHAREURL = 'subscription/') {
   const saved = { groups: [{ name: '中文组', links: [{ raw: 'ss://example' }] }], accesskey: 'original', key_md5: '' };
+  const sessions = new Map();
   let stores = 0;
   const app = createApplication({
     limits, pages: { 'zh:existing': '<html></html>' },
@@ -14,6 +15,11 @@ function harness(limits = FREE_LIMITS, SHAREURL = 'subscription/') {
     createStore() {
       stores++;
       return {
+        session: async id => sessions.get(id),
+        saveSession: async (id, value) => sessions.set(id, value),
+        removeSession: async id => sessions.delete(id),
+        removeUserSessions: async () => sessions.clear(),
+        allowLogin: async () => true,
         read: async keys => Object.fromEntries(keys.filter(key => key in saved).map(key => [key, saved[key]])),
         update: async changes => Object.assign(saved, changes),
         isNew: async () => false,
@@ -27,7 +33,7 @@ function harness(limits = FREE_LIMITS, SHAREURL = 'subscription/') {
     call(path, options = {}) {
       const { headers, ...init } = options;
       return app.fetch(new Request(`https://syvs.example${path}`, {
-        ...init, headers: { Authorization: 'Basic ' + btoa('user:dummy'), ...headers },
+        ...init, headers,
       }), { DEFAULT_PASSWORD: 'dummy', SHAREURL });
     },
   };
@@ -37,7 +43,7 @@ for (const [profile, limits] of Object.entries({ free: FREE_LIMITS, paid: PAID_L
   test(`${profile}: rejects forged writes before authentication, storage or password work`, async () => {
     const app = harness(limits);
     const before = JSON.stringify(app.saved);
-    for (const path of ['/editor/', '/editor/user/', '/editor/api/']) {
+    for (const path of ['/editor/', '/editor/user/', '/editor/api/', '/editor/login/', '/editor/logout/']) {
       for (const headers of [
         {},
         { Origin: 'https://evil.example' },
@@ -61,10 +67,13 @@ for (const [profile, limits] of Object.entries({ free: FREE_LIMITS, paid: PAID_L
   test(`${profile}: accepts same-origin editor and explicit non-browser writes`, async () => {
     const app = harness(limits);
     const headers = { 'X-SYVS-Request': '1', Origin: 'https://syvs.example', 'Sec-Fetch-Site': 'same-origin' };
+    const login = await app.call('/editor/login/', { method: 'POST', headers, body: new URLSearchParams({ username: 'user', password: 'dummy' }) });
+    assert.equal(login.status, 204);
+    headers.Cookie = login.headers.get('Set-Cookie').split(';')[0];
     const groups = [{ name: 'new', links: [{ raw: 'ss://changed' }] }];
     assert.equal((await app.call('/editor/', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ groups }) })).status, 200);
     assert.equal(app.saved.groups[0].links[0].raw, 'ss://changed');
-    assert.equal((await app.call('/editor/', { method: 'POST', headers: { 'X-SYVS-Request': '1', 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'accesskey=changed' })).status, 200);
+    assert.equal((await app.call('/editor/', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'accesskey=changed' })).status, 200);
     assert.equal(app.saved.accesskey, 'changed');
     assert.equal((await app.call('/editor/user/', { method: 'POST', headers, body: new URLSearchParams({ new_password: 'changed' }) })).status, 200);
     assert.equal(app.saved.users.user, 'test:changed');
@@ -87,4 +96,34 @@ test('subscription routes decode Unicode, spaces and literal percent signs exact
   // Keep private endpoint spelling canonical for edge path rules.
   assert.equal((await harness().call('/%65ditor/')).status, 404);
   assert.equal((await harness().call('/editor%2Fapi/')).status, 404);
+});
+
+test('logout revokes exactly one device, password change revokes the rest', async () => {
+  const app = harness();
+  const headers = { 'X-SYVS-Request': '1' };
+  const post = (path, form, cookie = '') => app.call(path, {
+    method: 'POST', headers: { ...headers, Cookie: cookie }, body: new URLSearchParams(form),
+  });
+  async function signIn() {
+    const response = await post('/editor/login/', { username: 'user', password: 'dummy' });
+    const cookie = response.headers.get('Set-Cookie');
+    for (const attribute of ['HttpOnly', 'SameSite=Lax', 'Secure', 'Path=/editor/', 'Max-Age=604800']) assert.ok(cookie.includes(attribute));
+    return cookie.split(';')[0];
+  }
+  const api = cookie => app.call('/editor/api/', { headers: { Cookie: cookie } });
+  const guest = await app.call('/editor/?lang=en');
+  assert.equal(guest.status, 303);
+  assert.equal(guest.headers.get('Location'), 'login/?lang=en');
+  const basic = await app.call('/editor/api/', { headers: { Authorization: 'Basic ' + btoa('user:dummy') } });
+  assert.equal(basic.status, 401);
+  assert.equal(basic.headers.get('WWW-Authenticate'), null);
+  const first = await signIn();
+  const other = await signIn();
+  assert.equal((await post('/editor/logout/', {}, first)).status, 204);
+  assert.equal((await api(first)).status, 401);
+  assert.equal((await api(other)).status, 200);
+  const third = await signIn();
+  assert.equal((await post('/editor/user/', { new_password: 'updated' }, other)).status, 200);
+  assert.equal((await api(other)).status, 401);
+  assert.equal((await api(third)).status, 401);
 });

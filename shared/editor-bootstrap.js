@@ -21,4 +21,13 @@ document.getElementById('myTabContent').addEventListener('input', function (even
 document.getElementById('myTabContent').addEventListener('click', function (event) {
   if (event.target.closest('button')) hasUnsavedChanges = true;
 });
+document.getElementById('logout').addEventListener('click', async () => {
+  if (hasUnsavedChanges && !confirm(t('unsaved_changes'))) return;
+  try {
+    const response = await fetch('logout/', { method: 'POST', headers: { 'X-SYVS-Request': '1' } });
+    if (!response.ok && response.status !== 401) await readEditorResponse(response);
+    hasUnsavedChanges = false;
+    location.replace('login/');
+  } catch (error) { showToast('warning', syvsEscapeHtml(error.message)); }
+});
 loadPage();

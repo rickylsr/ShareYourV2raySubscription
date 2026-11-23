@@ -10,7 +10,7 @@ export const FREE_LIMITS = Object.freeze({
   bodyBytes: MAX_BODY_BYTES, bodyChunks: MAX_BODY_CHUNKS, storeBytes: MAX_STORE_BYTES,
   groups: MAX_GROUPS, links: MAX_LINKS, linkBytes: MAX_LINK_BYTES,
   passwordBytes: MAX_PASSWORD_BYTES, groupNameBytes: 256, shareKeyBytes: 512,
-  urlLength: 8192, authHeaderLength: 4096, contentTypeLength: 256, acceptLanguageLength: 256,
+  urlLength: 8192, contentTypeLength: 256, acceptLanguageLength: 256,
 });
 export const PAID_LIMITS = Object.freeze({
   ...FREE_LIMITS,

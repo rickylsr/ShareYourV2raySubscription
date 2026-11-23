@@ -9,6 +9,7 @@ const encoder = new TextEncoder();
 function application(mode) {
   const limits = modeLimits(mode);
   return createApplication({
+    clientAddress: request => request.headers.get('CF-Connecting-IP'),
     pages: pages[mode], limits,
     createStore: (env, initial, metadata) => new D1Store(env.DB, initial, metadata, limits.storeBytes),
     userAllowed: username => username === 'user',

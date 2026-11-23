@@ -29,7 +29,7 @@ The image still listens on port **8000** and reads:
 - `DEFAULT_PASSWORD`, `SHAREURL`, `BASEURL`: same meanings and defaults. Docker
   does **not** require the Cloudflare-only `AUTH_SECRET`.
 
-Starting or reading an old volume does not rewrite it. Updates preserve unknown
+Login creates sessions.json and login-attempts.json in the data directory. Reading existing subscription and password files preserves their contents. Updates preserve unknown
 JSON fields and other accounts. Ordinary writes use a temporary file and rename,
 retaining file permissions and ownership when permitted. Separately bind-mounted
 files and symbolic links use compatible in-place writes, with reads and writes
@@ -53,8 +53,7 @@ The editor includes CSRF protection automatically. Custom scripts that write to
 Browser POSTs must come from the same origin; cross-origin requests return 403.
 Reverse proxies must preserve the external Host and configure trusted HTTPS
 forwarding (`FORWARDED_ALLOW_IPS`) correctly. BASEURL does not override the
-request origin. Public installations should also limit attempts to all `/editor`
-paths at their reverse proxy; Basic Auth checks GET requests as well as POSTs.
+request origin. Login allows 12 attempts per minute per connection peer. Behind a reverse proxy clients share the proxy's allowance. Configure BASEURL with the public prefix when mounting the editor below a subpath. Scripts POST username and password to `/editor/login/` with the same header and reuse the returned session cookie.
 
 ## Development
 

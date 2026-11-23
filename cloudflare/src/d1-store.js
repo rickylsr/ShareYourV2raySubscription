@@ -1,3 +1,4 @@
+import { LOGIN_ATTEMPTS, LOGIN_WINDOW_MS } from '../../shared/sessions.js';
 import { MAX_STORE_BYTES, RequestError } from '../../shared/limits.js';
 import { normaliseStore } from '../../shared/model.js';
 
@@ -9,6 +10,35 @@ export class D1Store {
     this.rows = new Map();
     this.loaded = new Set();
     this.maxStoreBytes = maxStoreBytes;
+  }
+
+  async allowLogin(peer, now) {
+    const [, attempt] = await this.db.batch([
+      this.db.prepare('DELETE FROM login_attempts WHERE expires <= ?').bind(now),
+      this.db.prepare(`INSERT INTO login_attempts VALUES (?, 1, ?)
+        ON CONFLICT(peer) DO UPDATE SET attempts = attempts + 1 WHERE attempts < ?`)
+        .bind(peer, now + LOGIN_WINDOW_MS, LOGIN_ATTEMPTS),
+    ]);
+    return attempt.meta.changes === 1;
+  }
+
+  session(id) {
+    return this.db.prepare('SELECT username, version, expires FROM editor_sessions WHERE id = ?').bind(id).first();
+  }
+
+  async saveSession(id, { username, version, expires }) {
+    await this.db.batch([
+      this.db.prepare('DELETE FROM editor_sessions WHERE expires <= ?').bind(Date.now()),
+      this.db.prepare('INSERT INTO editor_sessions VALUES (?, ?, ?, ?)').bind(id, username, version, expires),
+    ]);
+  }
+
+  removeSession(id) {
+    return this.db.prepare('DELETE FROM editor_sessions WHERE id = ?').bind(id).run();
+  }
+
+  removeUserSessions(username) {
+    return this.db.prepare('DELETE FROM editor_sessions WHERE username = ?').bind(username).run();
   }
 
   async load(keys) {

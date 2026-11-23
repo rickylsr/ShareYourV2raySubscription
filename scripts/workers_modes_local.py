@@ -3,7 +3,7 @@
 Run after npm ci && npm run build from the repository root. Uses dummy secrets,
 loopback HTTP and a temporary database; never reads the deployment credentials.
 """
-import base64
+from session_http import login_cookie
 import json
 import os
 from pathlib import Path
@@ -60,10 +60,14 @@ def main():
             opener = build_opener(ProxyHandler({}))
             process = None
 
+            cookies = {}
+
             def request(path, payload=None, content_type='application/json', authenticated=True):
                 headers = {'X-SYVS-Request': '1'}
                 if authenticated:
-                    headers['Authorization'] = 'Basic ' + base64.b64encode(f'user:{password}'.encode()).decode()
+                    if password not in cookies:
+                        cookies[password] = login_cookie(origin, password, open_request=opener.open)
+                    headers['Cookie'] = cookies[password]
                 if payload is not None:
                     headers['Content-Type'] = content_type
                     if not isinstance(payload, bytes):

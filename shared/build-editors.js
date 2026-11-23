@@ -29,12 +29,16 @@ for (const filename of (await readdir(new URL('../app/translations/', import.met
 const environment = new nunjucks.Environment([], { autoescape: true });
 environment.addFilter('urlencode', value => encodeURIComponent(value));
 environment.addFilter('tojson', value => new nunjucks.runtime.SafeString(JSON.stringify(value).replace(/[<>&']/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`)));
+const loginTemplate = nunjucks.compile(await readFile(new URL('../app/templates/login.html', import.meta.url), 'utf8'), environment);
 const template = nunjucks.compile(source, environment);
 for (const target of ['cloudflare', 'docker']) {
 const output = {};
 for (const mode of target === 'docker' ? ['docker'] : ['free', 'paid']) {
 const pages = {};
 for (const language of ['zh', 'en']) {
+  pages[`${language}:login`] = loginTemplate.render({
+    language, html_lang: language === 'zh' ? 'zh-CN' : 'en', _: key => translations[language][key],
+  });
   for (const fresh of [true, false]) {
     pages[`${language}:${fresh ? 'new' : 'existing'}`] = template.render({
       baseurl: '', shareurl: '', accesskey: '', groups: [], is_newuser: fresh,

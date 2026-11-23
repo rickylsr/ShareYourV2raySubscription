@@ -5,7 +5,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { JsonStore } from '../docker/json-store.js';
-import { checkPassword, hashPassword } from '../docker/passwords.js';
+import { createApplication } from '../shared/application.js';
+import { SELF_HOSTED_LIMITS } from '../shared/limits.js';
+import { checkPassword, hashPassword, equal } from '../docker/passwords.js';
 import { requestScheme } from '../docker/http.js';
 
 test('JSON reads preserve legacy bytes and unknown fields; writes merge current data', async t => {
@@ -81,4 +83,34 @@ test('writes through legacy symlinked configuration files without replacing the 
     if (index % 2) assert.equal((await store.state()).data.groups.length, 100);
     else await store.update({ accesskey: String(index) });
   }));
+});
+
+test('file-backed sessions respect cookie scope, expiry, credential reset and concurrent login limits', async t => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'syvs-sessions-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const app = createApplication({
+    createStore: () => new JsonStore(directory), pages: {}, limits: SELF_HOSTED_LIMITS,
+    validate() {}, validShareUrl: () => true, userAllowed: name => name === 'user', equal,
+  });
+  const env = { DEFAULT_PASSWORD: 'initial', BASEURL: 'https://example.test/prefix/', DATA_DIR: directory };
+  const call = (route, init) => app.fetch(new Request('https://example.test/editor/' + route, init), env);
+  const login = () => call('login/', { method: 'POST', headers: { 'X-SYVS-Request': '1' },
+    body: new URLSearchParams({ username: 'user', password: 'initial' }) });
+  const response = await login();
+  assert.equal(response.status, 204);
+  const cookie = response.headers.get('Set-Cookie');
+  assert.match(cookie, /Path=\/prefix\/editor\/;/);
+  const headers = { Cookie: cookie.split(';')[0] };
+  assert.equal((await call('api/', { headers })).status, 200);
+  env.DEFAULT_PASSWORD = 'reset';
+  assert.equal((await call('api/', { headers })).status, 401);
+  env.DEFAULT_PASSWORD = 'initial';
+  const file = path.join(directory, 'sessions.json');
+  const sessions = JSON.parse(await readFile(file));
+  Object.values(sessions)[0].expires = Date.now() - 1;
+  await writeFile(file, JSON.stringify(sessions));
+  assert.equal((await call('api/', { headers })).status, 401);
+  const batch = await Promise.all(Array.from({ length: 12 }, login));
+  assert.equal(batch.filter(reply => reply.status === 204).length, 11);
+  assert.equal(batch.filter(reply => reply.status === 429).length, 1);
 });

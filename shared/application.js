@@ -1,3 +1,4 @@
+import { authenticatedSession, credentialVersion, digest, newToken, sessionCookie, SESSION_SECONDS } from './sessions.js';
 import { removeComments } from './subscription.js';
 import { RequestError, requireBytes, readBody } from './limits.js';
 
@@ -44,20 +45,28 @@ export function createApplication(platform) {
     return btoa(text);
   }
 
-  async function authorized(request, store, env) {
-    const header = request.headers.get('Authorization') || '';
-    if (!/^Basic /i.test(header) || header.length > limits.authHeaderLength) return false;
-    let credentials;
-    try { credentials = decodeBase64(header.slice(6)); } catch { return false; }
-    const colon = credentials.indexOf(':');
-    if (colon < 0) return false;
-    const username = credentials.slice(0, colon);
-    const supplied = credentials.slice(colon + 1);
-    if (!platform.userAllowed(username) || (!supplied && !platform.allowEmptyPassword)) return false;
-    if (encoder.encode(supplied).length > MAX_PASSWORD_BYTES) return false;
+  async function login(request, url, store, env) {
+    const body = await readBody(request, { bodyBytes: 16384, bodyChunks: 64 });
+    const form = await parseForm(request, body);
+    const username = form.get('username');
+    const password = form.get('password');
+    const peer = platform.clientAddress?.(request) || env.clientAddress || 'local';
+    if (!await store.allowLogin(await digest(peer), Date.now())) {
+      return json({ error: 'Too many login attempts' }, 429);
+    }
+    const denied = () => json({ error: 'Invalid username or password' }, 401);
+    if (typeof username !== 'string' || !platform.userAllowed(username) || typeof password !== 'string' ||
+        (!password && !platform.allowEmptyPassword) || encoder.encode(password).length > MAX_PASSWORD_BYTES) return denied();
     const { users = {} } = await store.read(['users']);
-    if (!Object.hasOwn(users, username)) return username === 'user' && equal(env.DEFAULT_PASSWORD, supplied);
-    return platform.passwords.verify(users[username], supplied, env, username);
+    const valid = Object.hasOwn(users, username)
+      ? await platform.passwords.verify(users[username], password, env, username)
+      : username === 'user' && await equal(env.DEFAULT_PASSWORD, password);
+    if (!valid) return denied();
+    const token = newToken();
+    await store.saveSession(await digest(token), {
+      username, version: await credentialVersion(token, username, users, env), expires: Date.now() + SESSION_SECONDS * 1000,
+    });
+    return reply(null, 204, { 'Set-Cookie': sessionCookie(url, env, token) });
   }
 
   function normalizeLanguage(value = '') {
@@ -119,14 +128,14 @@ export function createApplication(platform) {
     if (path === '/' && ['GET', 'HEAD'].includes(request.method)) {
       return reply('SYVS - Share Your V2ray Subscriptions');
     }
-    const editorPaths = ['/editor/', '/editor/api/', '/editor/user/'];
+    const editorPaths = ['/editor/', '/editor/api/', '/editor/user/', '/editor/login/', '/editor/logout/'];
     if (editorPaths.includes(path + '/') || subscriptionPath + '/' === '/' + shareurl) {
       url.pathname += '/';
-      return reply(null, 308, { Location: url.toString() });
+      return reply(null, 308, { Location: editorPaths.includes(path + '/') ? path.split('/').pop() + '/' + url.search : url.toString() });
     }
     const isEditor = editorPaths.includes(path);
     if (!isEditor && subscriptionPath !== '/' + shareurl) return reply('Not found', 404);
-    const allowed = isEditor ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD'];
+    const allowed = path === '/editor/logout/' ? ['POST'] : isEditor ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD'];
     if (!allowed.includes(request.method)) return reply('Method not allowed', 405, { Allow: allowed.join(', ') });
     if (request.method === 'POST') {
       const origin = request.headers.get('Origin');
@@ -144,8 +153,18 @@ export function createApplication(platform) {
     const apiRead = path === '/editor/api/';
     const pageRead = path === '/editor/' && request.method !== 'POST';
     const store = platform.createStore(env, isEditor ? ['users', ...((apiRead || pageRead) ? metadata : [])] : [], pageRead ? metadata : []);
-    if (isEditor && !await authorized(request, store, env)) {
-      return reply('Unauthorized', 401, { 'WWW-Authenticate': 'Basic realm="Authentication Required", charset="UTF-8"' });
+    if (path === '/editor/login/') {
+      if (request.method === 'POST') return login(request, url, store, env);
+      return reply(pages[languageFor(request, url) + ':login'], 200, { 'Content-Type': 'text/html; charset=utf-8' });
+    }
+    const session = isEditor ? await authenticatedSession(request, store, env) : null;
+    if (isEditor && !session) {
+      if (pageRead) return reply(null, 303, { Location: 'login/' + (url.searchParams.has('lang') ? '?lang=' + languageFor(request, url) : '') });
+      return json({ error: 'Session expired' }, 401);
+    }
+    if (path === '/editor/logout/') {
+      await store.removeSession(session.id);
+      return reply(null, 204, { 'Set-Cookie': sessionCookie(url, env) });
     }
     if (path === '/editor/user/') {
       if (request.method !== 'POST') return json({ message: 'No action taken' });
@@ -154,8 +173,11 @@ export function createApplication(platform) {
       if (typeof password !== 'string' || !password) return json({ error: 'Invalid password format' });
       requireBytes(password, MAX_PASSWORD_BYTES, 'Password');
       const record = await platform.passwords.hash(password, env);
-      await store.update({ users: { user: record } });
-      return json({ success: 'Password updated successfully' });
+      await store.update({ users: { [session.username]: record } });
+      await store.removeUserSessions(session.username);
+      return reply(JSON.stringify({ success: 'Password updated successfully' }), 200, {
+        'Content-Type': 'application/json', 'Set-Cookie': sessionCookie(url, env),
+      });
     }
     if (path === '/editor/' && request.method !== 'POST') {
       const language = languageFor(request, url);

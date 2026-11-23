@@ -66,13 +66,11 @@ Worker 的 `SHAREURL` 和 `BASEURL` 与 Docker 设置含义一致。
 
 ## 公网部署：登录限速与 POST 防护
 
-**对外开放编辑器前，必须配置登录入口的限速或访问控制。** 应用没有内置分布式登录限速；快速密码校验不提供在线防猜测能力。`AUTH_SECRET` 和下述 CSRF 防护也不能代替限速。
-
-自定义域名部署时，在域名所属 Zone 的安全规则中创建 Rate limiting rule，匹配 `starts_with(http.request.uri.path, "/editor")`，按访问者 IP 计数，并覆盖所有 HTTP 方法。Basic Auth 会在页面和 API 的 GET 请求上校验密码，不能只限制改密 POST。可从每 IP 每 10 秒 20 次、阻断 10 秒开始，根据正常编辑操作调整阈值；这是部署起点，分布式攻击仍需额外访问控制。不要把公开订阅接口加入登录规则，以免客户端更新订阅被误阻断。规则数量、周期、动作由域名的 WAF 套餐决定，与 Workers Paid 容量策略分别配置。参见 [限速规则与套餐](https://developers.cloudflare.com/waf/rate-limiting-rules/)。
+登录表单按来源 IP 限制每分钟 12 次提交。公开部署可在域名 Zone 的 WAF 中额外限制 `POST /editor/login/`。现有 D1 数据库升级时需执行更新后的 `cloudflare/schema.sql`，创建会话和限速表。仓库的部署脚本会自动执行这一步。
 
 域名 Zone 的规则不等于保护了所有 `workers.dev` / 预览入口。使用自定义域名保护后，在配置中设置 `workers_dev: false`、`preview_urls: false`，并检查和关闭其他公开预览、版本及部署入口，防止绕过域名规则。只用 `workers.dev` 时，应先通过 [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/#manage-access-to-workersdev) 限制访问；如果整个 Worker 都受 Access 保护，订阅客户端也需能够认证，否则应改用仅保护编辑器的部署方案。不要假设应用已自动创建这些规则或策略。
 
-所有 POST（Docker 和 Workers）均要求 `X-SYVS-Request: 1`。浏览器还会校验 `Origin` 为当前请求源，并拒绝 `Sec-Fetch-Site` 声明的跨源请求，包括同站不同源。编辑器自动发送该请求头；自定义 API 脚本需添加它，例如 `curl -u user -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=新分享密钥' https://你的域名/editor/`。缺少请求头或来源不符会返回 403；接口不开放跨源 CORS 写入。Docker 反向代理应保留外部 Host，并正确配置受信任的 HTTPS 转发头；`BASEURL` 仅控制分享链接，不是 CSRF 来源白名单。
+所有 POST（Docker 和 Workers）均要求 `X-SYVS-Request: 1`。浏览器还会校验 `Origin` 为当前请求源，并拒绝 `Sec-Fetch-Site` 声明的跨源请求，包括同站不同源。编辑器自动发送该请求头；自定义 API 脚本先提交登录表单并保存 Cookie，再在写请求中携带 Cookie 和该请求头，例如 `curl -b cookies.txt -H 'X-SYVS-Request: 1' --data-urlencode 'accesskey=新分享密钥' https://你的域名/editor/`。缺少请求头或来源不符会返回 403；接口不开放跨源 CORS 写入。Docker 反向代理应保留外部 Host，并正确配置受信任的 HTTPS 转发头；`BASEURL` 用于分享链接和同域编辑器的 Cookie 路径，不是 CSRF 来源白名单。
 
 ## 选择与切换 Free / Paid
 
@@ -85,7 +83,7 @@ Paid 切回 Free 前，先在 Paid 下把数据缩到 Free 上限。若误切后
 ## 容量与密码校验
 
 Cloudflare 使用带随机盐的 HMAC-SHA256 校验值，密钥来自独立的 256 位 `AUTH_SECRET`。
-密钥只保存在 Cloudflare secrets 中，D1 只保存校验值。网页改密和 HTTP Basic Auth 保留，
+密钥只保存在 Cloudflare secrets 中，D1 只保存校验值。支持表单登录和网页改密，
 包括首次请求在内均不执行 PBKDF2；Docker 适配层继续验证旧密码，并保留旧文件格式。
 
 此方案依赖随机密钥与数据库分开保管：仅 D1 泄露时无法离线猜测密码；若 D1 和

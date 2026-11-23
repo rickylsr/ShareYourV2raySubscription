@@ -28,6 +28,9 @@
                     {% endfor %}
                 </div>
             </div>
+            <div id="sessionNotice" class="alert alert-warning mt-3" role="alert" hidden>
+                {{ _('session_expired') }} <a href="login/?lang={{ language }}" target="_blank" rel="noopener">{{ _('login_tab') }}</a>
+            </div>
             <p class="text-secondary">{{ _('description') }}</p>
             <div class="bg-body rounded-3 shadow-sm p-3 mb-4">
                 <!-- 状态栏 -->
@@ -36,6 +39,7 @@
                         <span>{{ _('current_user') }}</span>
                     </div>
                     <div>
+                        <button type="button" id="logout" class="btn btn-sm btn-outline-secondary">{{ _('sign_out') }}</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
                             {{ _('reset_login_password') }}
                         </button>
@@ -402,6 +406,8 @@
             }
 
             async function readEditorResponse(response) {
+                const notice = globalThis.document?.getElementById('sessionNotice');
+                if (notice && (response.ok || response.status === 401)) notice.hidden = response.status !== 401;
                 const text = await response.text();
                 let data;
                 try { data = JSON.parse(text); } catch {}
@@ -842,7 +848,8 @@
                         });
                         const data = await readEditorResponse(response);
                         if (data.success) {
-                            showToast('success', t('password_reset_success'));
+                            alert(t('password_changed_login'));
+                            location.replace('login/');
                         } else {
                             showToast('warning', t('password_reset_failed'));
                         }

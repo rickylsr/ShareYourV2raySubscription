@@ -17,6 +17,11 @@ from urllib.request import Request, urlopen
 old_image = sys.argv[1] if len(sys.argv) > 1 else 'syvs:legacy-fixture'
 new_image = sys.argv[2] if len(sys.argv) > 2 else 'syvs:shared-test'
 label = 'syvs-upgrade-' + secrets.token_hex(8)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+from session_http import login_cookie
+
+web_login = {}
+cookies = {}
 containers = set()
 volumes = set()
 directories = []
@@ -30,7 +35,17 @@ def docker(*args):
 
 
 def call(url, password, path='/editor/api/', *, username='user', payload=None, form=None):
-    headers = {'X-SYVS-Request': '1', 'Authorization': 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()}
+    headers = {'X-SYVS-Request': '1'}
+    if web_login[url] and path.startswith('/editor/'):
+        try:
+            key = (url, username, password)
+            if key not in cookies:
+                cookies[key] = login_cookie(url, password, username)
+            headers['Cookie'] = cookies[key]
+        except HTTPError as error:
+            return error.code, error.read()
+    elif not web_login[url]:
+        headers['Authorization'] = 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()
     body = None
     if payload is not None:
         body = json.dumps(payload, ensure_ascii=False).encode()
@@ -61,6 +76,7 @@ def start(image, volume, suffix, default='changed-bootstrap', *, file_directory=
         try:
             with urlopen(url + '/', timeout=1) as response:
                 if response.status == 200:
+                    web_login[url] = image == new_image
                     return name, url
         except (URLError, TimeoutError, OSError):
             time.sleep(.1)

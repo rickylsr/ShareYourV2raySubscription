@@ -1,3 +1,4 @@
+import { LOGIN_ATTEMPTS, LOGIN_WINDOW_MS } from '../shared/sessions.js';
 import { mkdir, open, readFile, rename, stat, lstat, unlink, chmod, chown } from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -78,6 +79,41 @@ export class JsonStore {
       if (handle) await handle.close();
       if (created) await unlink(temporary).catch(error => { if (error.code !== 'ENOENT') throw error; });
     }
+  }
+
+  async editAuthFile(name, change) {
+    return locked(path.join(this.directory, name), async () => {
+      const records = await this.readUnlocked(name);
+      for (const [key, record] of Object.entries(records)) {
+        if (record.expires <= Date.now()) delete records[key];
+      }
+      const result = change(records);
+      if (result !== false) await this.writeFile(name, records);
+      return result;
+    });
+  }
+
+  allowLogin(peer, now) {
+    return this.editAuthFile('login-attempts.json', records => {
+      const attempt = records[peer] ?? { count: 0, expires: now + LOGIN_WINDOW_MS };
+      if (attempt.count >= LOGIN_ATTEMPTS) return false;
+      attempt.count++;
+      records[peer] = attempt;
+      return true;
+    });
+  }
+
+  async session(id) { return (await this.readFile('sessions.json'))[id]; }
+  saveSession(id, session) {
+    return this.editAuthFile('sessions.json', records => { records[id] = session; });
+  }
+  removeSession(id) {
+    return this.editAuthFile('sessions.json', records => { delete records[id]; });
+  }
+  removeUserSessions(username) {
+    return this.editAuthFile('sessions.json', records => {
+      for (const [id, record] of Object.entries(records)) if (record.username === username) delete records[id];
+    });
   }
 
   async data(unlocked = false) { return normaliseStore(await (unlocked ? this.readUnlocked('data.json', true) : this.readFile('data.json', true))); }

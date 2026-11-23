@@ -4,7 +4,7 @@ CPU is measured by Workers tail, not by client elapsed time. Provide the current
 password via SYVS_TEST_PASSWORD. Requests carry only non-secret case labels.
 """
 
-import base64
+from session_http import login_cookie
 import os
 import sys
 from urllib.parse import urlencode
@@ -12,8 +12,7 @@ from urllib.request import Request, urlopen
 
 base = sys.argv[1].rstrip('/')
 prefix = sys.argv[sys.argv.index('--prefix') + 1] if '--prefix' in sys.argv else ''
-authorization = 'Basic ' + base64.b64encode(
-    ('user:' + os.environ['SYVS_TEST_PASSWORD']).encode()).decode()
+cookie = login_cookie(base, os.environ['SYVS_TEST_PASSWORD'])
 cases = [
     ('api-warm', '/editor/api/', {}),
     ('editor-warm', '/editor/', {}),
@@ -24,14 +23,14 @@ for name, path, query in cases:
     # Keep the first authentication/render separate from the repeated samples.
     prime_url = base + path + '?' + urlencode({**query, 'cpu_case': name + '-prime'})
     with urlopen(Request(prime_url, headers={
-        'Authorization': authorization, 'User-Agent': 'SYVS-CPU-Test/3.1',
+        **({'Cookie': cookie} if path.startswith('/editor/') else {}), 'User-Agent': 'SYVS-CPU-Test/3.1',
     }), timeout=30) as response:
         assert response.status == 200, response.status
         response.read()
     for _ in range(30):
         url = base + path + '?' + urlencode({**query, 'cpu_case': name})
         with urlopen(Request(url, headers={
-            'Authorization': authorization, 'User-Agent': 'SYVS-CPU-Test/3.1',
+            **({'Cookie': cookie} if path.startswith('/editor/') else {}), 'User-Agent': 'SYVS-CPU-Test/3.1',
         }), timeout=30) as response:
             assert response.status == 200, response.status
             response.read()

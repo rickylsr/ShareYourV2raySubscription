@@ -4,6 +4,7 @@ Only use on disposable test data: this changes subscriptions and the admin passw
 Provide the test password via SYVS_TEST_PASSWORD; secrets are never printed.
 """
 
+from session_http import login_cookie
 import base64
 import json
 import os
@@ -17,11 +18,18 @@ def smoke(base_url, verify_persisted=False):
     password = os.environ['SYVS_TEST_PASSWORD']
     new_password = password + '-changed'
 
+    cookies = {}
+
     def call(path, *, data=None, payload=None, authenticated=True, pwd=None):
         headers = {'X-SYVS-Request': '1', 'User-Agent': 'SYVS-Deployment-Test/3.1'}
-        if authenticated:
-            token = base64.b64encode(f'user:{pwd or password}'.encode()).decode()
-            headers['Authorization'] = 'Basic ' + token
+        if authenticated and path.startswith('/editor/'):
+            credential = pwd or password
+            try:
+                if credential not in cookies:
+                    cookies[credential] = login_cookie(base_url, credential)
+            except HTTPError as error:
+                return error.code, error.read()
+            headers['Cookie'] = cookies[credential]
         body = None
         if data is not None:
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -36,7 +44,7 @@ def smoke(base_url, verify_persisted=False):
         return response.status, response.read()
 
     if verify_persisted:
-        assert call('/editor/')[0] == 401
+        assert call('/editor/api/')[0] == 401
         status, body = call('/editor/api/', pwd=new_password)
         assert status == 200, (status, body[:500])
         state = json.loads(body)
@@ -49,7 +57,8 @@ def smoke(base_url, verify_persisted=False):
         return
 
     assert call('/')[0] == 200
-    assert call('/editor/', authenticated=False)[0] == 401
+    assert b'id="login"' in call('/editor/', authenticated=False)[1]
+    assert call('/editor/api/', authenticated=False)[0] == 401
     assert call('/editor/', pwd='wrong')[0] == 401
     status, body = call('/editor/?lang=en')
     assert status == 200, (status, body[:500])
@@ -69,7 +78,7 @@ def smoke(base_url, verify_persisted=False):
     assert call('/subscription/?' + query, authenticated=False)[0] == 403
     status, body = call('/editor/user/', data={'new_password': new_password})
     assert status == 200 and 'success' in json.loads(body), (status, body)
-    assert call('/editor/')[0] == 401
+    assert call('/editor/api/')[0] == 401
     assert call('/editor/', pwd=new_password)[0] == 200
     state = json.loads(call('/editor/api/', pwd=new_password)[1])
     assert state['groups'][0]['links'][0]['comment'] == '香港'

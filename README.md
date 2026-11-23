@@ -57,7 +57,8 @@ docker run -d \
 - **反向代理**：正确设置 `BASEURL` 以正确显示共享链接。
 - **持久化存储**：建议使用数据挂载方式确保数据安全。  
 - **重置设置**：如果需要重置订阅设置，只需清空挂载目录中的数据文件。
-- **安全问题**: editor页面使用了HTTP Basic Auth，用户名固定为`user`，如果没有特别设置，默认密码为 `password`。您可以通过在 `docker run` 时设置环境变量 `DEFAULT_PASSWORD` 以使用不同的密码。密码存储在容器的`/home/app/data/users.json` 可以随时通过删除重置。密码也可以在editor页面随时重设。
+- **编辑器登录**：打开 `/editor/`，使用原账号和密码登录。Docker 初始账号为 `user`，密码由 `DEFAULT_PASSWORD` 指定，未设置时为 `password`。已保存的密码优先。会话有效期为 7 天，退出会撤销当前会话，改密会撤销该账号的全部会话。
+- **脚本升级**：向 `/editor/login/` 提交表单字段 `username` 和 `password`，带上 `X-SYVS-Request: 1`。成功返回 204，后续请求携带响应设置的 Cookie。所有写请求都需要该请求头。订阅链接继续使用原分享密钥。
 - **高级设置**：可以通过设置docker容器环境变量 `SHAREURL` （默认为： `subscription/` ）自定义分享链接的前缀
 
 ## v3.1 Docker 升级兼容

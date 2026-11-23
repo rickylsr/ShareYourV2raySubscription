@@ -57,7 +57,8 @@ The container stores its data in `/home/app/data/data.json`. Because `/home/app/
 - **Reverse proxy:** Set `BASEURL` correctly so that shared links are displayed properly.
 - **Persistent storage:** Mounting a data directory is recommended to prevent data loss.
 - **Resetting settings:** To reset the subscription settings, clear the data files in the mounted directory.
-- **Security:** The editor page uses HTTP Basic Authentication. The username is always `user`, and the default password is `password` unless configured otherwise. Set the `DEFAULT_PASSWORD` environment variable when running the container to use a different password. Credentials are stored in `/home/app/data/users.json`; delete this file at any time to reset them. The password can also be changed from the editor page.
+- **Editor login:** Open `/editor/` and sign in with the existing account and password. The initial Docker username is `user`. Set `DEFAULT_PASSWORD` to override the initial password (`password`). Saved credentials take precedence. Sessions last seven days. Signing out revokes the current session and changing the password revokes all sessions for that account.
+- **Script migration:** POST the form fields `username` and `password` to `/editor/login/` with `X-SYVS-Request: 1`. On success, the response returns 204 and sets a cookie. Send that cookie on subsequent editor requests and keep the header on every POST. Subscription clients continue using the existing share key.
 - **Advanced configuration:** Set the Docker container environment variable `SHAREURL` to customize the shared-link prefix. Its default value is `subscription/`.
 
 ## v3.1 Docker compatibility

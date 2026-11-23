@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="{{ html_lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ _('sign_in') }} · {{ _('page_title') }}</title>
+  <style>
+    * { box-sizing: border-box }
+    body { margin: 0; color: #212529; background: #f8f9fa; font: 1rem/1.55 system-ui, sans-serif }
+    header { max-width: 72rem; margin: auto; padding: 1.5rem clamp(1rem,5vw,4rem); display: flex; justify-content: space-between; align-items: center }
+    .brand { display: inline-flex; align-items: center; gap: .65rem; font-weight: 750; letter-spacing: .04em }
+    .mark { display: grid; place-content: center; gap: 3px; width: 32px; height: 32px; border-radius: 9px; background: #0d6efd; transform: rotate(-4deg) }
+    .mark i { display: block; width: 16px; height: 3px; background: white; border-radius: 2px }
+    .mark i:last-child { width: 10px }
+    nav { display: flex; border: 1px solid #adb5bd; border-radius: 6px; overflow: hidden }
+    nav a { color: #495057; text-decoration: none; padding: .3rem .65rem; font-size: .85rem }
+    nav a[aria-current=page] { color: white; background: #5c636a }
+    main { width: min(27rem,calc(100% - 2rem)); margin: clamp(2.5rem,10vh,7rem) auto }
+    section { background: #fff; border: 1px solid #dee2e6; border-radius: 14px; padding: clamp(1.5rem,5vw,2.5rem); box-shadow: 0 6px 26px rgb(33 37 41 / 6%) }
+    h1 { font-size: 1.8rem; line-height: 1.2; margin: 0 0 .6rem }
+    p { color: #5c636a; margin: 0 0 1.8rem }
+    label { display: block; font-weight: 550; margin: 1.1rem 0 .4rem }
+    input,button { width: 100%; min-height: 2.85rem; border-radius: 6px; font: inherit }
+    input { padding: .55rem .8rem; border: 1px solid #adb5bd; color: inherit; background: white }
+    :focus-visible { outline: 3px solid #86b7fe; outline-offset: 2px }
+    button { margin-top: 1.5rem; background: #0d6efd; color: #fff; border: 0; font-weight: 600; cursor: pointer }
+    button:hover { background: #0b5ed7 }
+    button:disabled { opacity: .65 }
+    #feedback { color: #b02a37; font-size: .93rem; margin: .85rem 0 0 }
+    #feedback:empty { display: none }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="brand"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>SYVS</span>
+    <nav aria-label="{{ _('language') }}">
+      <a href="?lang=zh" hreflang="zh-CN" {% if language == 'zh' %}aria-current="page"{% endif %}>中文</a>
+      <a href="?lang=en" hreflang="en" {% if language == 'en' %}aria-current="page"{% endif %}>English</a>
+    </nav>
+  </header>
+  <main><section>
+    <h1>{{ _('login_heading') }}</h1>
+    <p>{{ _('login_intro') }}</p>
+    <form method="post" id="login">
+      <label for="username">{{ _('login_username') }}</label>
+      <input id="username" name="username" value="user" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      <label for="password">{{ _('login_password') }}</label>
+      <input id="password" name="password" type="password" autocomplete="current-password">
+      <p id="feedback" role="alert"></p>
+      <button>{{ _('sign_in') }}</button>
+    </form>
+  </section></main>
+  <script>
+    const form = document.getElementById('login');
+    const feedback = document.getElementById('feedback');
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = form.querySelector('button');
+      button.disabled = true;
+      feedback.textContent = '';
+      try {
+        const response = await fetch(location.href, {
+          method: 'POST', headers: { 'X-SYVS-Request': '1' }, body: new URLSearchParams(new FormData(form)),
+        });
+        if (response.status === 204) {
+          location.replace('../?lang={{ language }}');
+          return;
+        }
+        feedback.textContent = response.status === 401 ? {{ _('invalid_login') | tojson }}
+          : response.status === 429 ? {{ _('login_limited') | tojson }} : {{ _('login_failed') | tojson }};
+        if (response.status === 401) form.elements.password.select();
+      } catch { feedback.textContent = {{ _('login_failed') | tojson }}; }
+      finally { button.disabled = false; }
+    });
+  </script>
+</body>
+</html>
